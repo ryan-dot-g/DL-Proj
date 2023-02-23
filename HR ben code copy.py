@@ -30,7 +30,7 @@ plt.xlabel('x (pix)')
 plt.ylabel('y (pix)')
 # plt.xlim([2,8])
 # plt.ylim([-34,-25])
-plt.show()
+plt.show() # comment
 
 centre = (37,41)
 plt.scatter(stars.X,stars.Y)
