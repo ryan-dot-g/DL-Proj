@@ -83,7 +83,9 @@ plt.show()
 
 '''         GALAXY DISTANCE MATCHING SECTION        '''
 # distance modulus to adjust (eye test) 6.8
-dm = np.mean( goodStars.abs_mag ) - np.mean( m1 )
+starsInRange = goodStars[ (min(colour) <= goodStars.colour) *\
+                         goodStars.colour <= max(colour) ]
+dm = np.mean( starsInRange.abs_mag ) - np.mean( m1 )
 dm = 6.2 
 delta_dm = 0.1 # uncertainty (eye test)
 
