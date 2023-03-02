@@ -5,7 +5,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import warnings; warnings.filterwarnings('ignore')
 import os 
-import pandas as pd 
+import pandas as pd
+from tqdm import tqdm
+from astropy.timeseries import LombScargle
 ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\' 
 
 # define default plot settings
@@ -14,11 +16,5 @@ matplotlib.rcParams['image.origin'] = 'lower'
 matplotlib.rcParams['figure.figsize']=(8.0,6.0)    #(6.0,4.0)
 matplotlib.rcParams['font.size']=16              #10 
 matplotlib.rcParams['savefig.dpi']= 300             #72 
-
-
-
-
-
-
 
 
