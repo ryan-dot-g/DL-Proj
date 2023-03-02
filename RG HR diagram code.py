@@ -29,8 +29,8 @@ plt.show()
 
 '''             PER GALAXY SECTION          '''
 # define a galaxy - eyesight clustering
-centre = (37,41)
-radius = 3
+centre = (-38,34)
+radius = 5
 d = np.sqrt((stars.X-centre[0])** 2 + (stars.Y - centre[1])**2)
 galaxy = stars[d<radius] # filter to only close ones
 
@@ -84,6 +84,7 @@ plt.show()
 '''         GALAXY DISTANCE MATCHING SECTION        '''
 # distance modulus to adjust (eye test) 6.8
 dm = np.mean( goodStars.abs_mag ) - np.mean( m1 )
+dm = 6.2 
 delta_dm = 0.1 # uncertainty (eye test)
 
 plt.scatter( goodStars.colour, goodStars.abs_mag, 
