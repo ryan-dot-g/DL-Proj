@@ -14,11 +14,26 @@ PARALLAX MASTER STAR CODE OUTPUT
 same thing 
 
 
-
+dyls
+complete period-luminosity relationship
+use it to get distances to every variable star
+talk about stellar populations - temps or size, look at 2nd year stuff
+bolometric luminosity?
+fit black body to spectra to get temp and radius
 
 ryan
 create galaxy class which has galaxy.stars, galaxy.distance, galaxy.meanRV, and uncertainties
 sinead can use this for rot curves
 
 then calibrate the x-ray flashes using mine and dylans data
-then calibrate the fuzzies 
+then calibrate the fuzzies to get hubbles constant
+
+
+sinead
+rotation curves using ryan galaxy clustering
+need to remove outlier stars, or just remove the entire galaxy
+need to think about how to correct for inclination to get true radius and true radial velocities - u know spiral galaxies are roughly circular so can find major/minor axes
+or if its too hard, just dont do it
+fit the envelope, bunch of data underneath outer curve. Think about why
+mass distribution in galaxies - dark matter?
+galaxy classification

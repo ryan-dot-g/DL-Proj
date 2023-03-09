@@ -16,6 +16,7 @@ matplotlib.rcParams['font.size']=16              #10
 # matplotlib.rcParams['savefig.dpi']= 300             #72 
 
 '''                 BEGIN CLUSTERING SECTION            '''
+
 '''                 BEGIN PRELIM DATA SECTION            '''
 from sklearn.cluster import KMeans
     
@@ -40,7 +41,7 @@ TOP = [
 LEFT = [
     [ [pmin,pmax], [pmin,pmax], [pmin,-20], [-20,20],  [20,25.5], [25.5,pmax] ],
     [ [-30,20],    [pmin,-30],  [20,pmax],  [20,pmax], [20,pmax], [20,pmax]   ],
-    [     1,            5,          1,         5,         7,          6       ]
+    [     1,            5,          1,         5,         7,          7       ]
     ]
 
 # partition 1 is galactic disk stars
@@ -62,9 +63,9 @@ BACK = [
 
 # idk fam tbh
 FRONT = [
-    [ [pmin,pmax] ],
-    [ [pmin,pmax] ],
-    [ 10 ]
+    [ [pmin,-37],  [-37,-20],  [-37,-20],  [-20,pmax], [-20,pmax] ],
+    [ [pmin,pmax], [7.5,pmax], [pmin,7.5], [-30,pmax], [pmin,-30] ],
+    [    1,           33,           1,          1,          1     ]
     ]
 
 DEFAULT = [
@@ -76,8 +77,8 @@ DEFAULT = [
 '''                 BEGIN USER INPUT SECTION            '''
 
 
-camera = "Bottom"; cameraData = BOTTOM
-plotPartitions = False # whether to plot clustering scatters
+camera = "Back"; cameraData = BACK
+plotPartitions = True # whether to plot clustering scatters
 plotHRs = False # whether to plot HR diagrams of each galaxy
 plotStarCalibration = False # whether to plot master HR diagram for parallax stars
 plotHRcalibration = True # whether to plot fit of HR diagram against star calibration
@@ -161,62 +162,76 @@ to create a period-intrinsic luminosity relationship. Then you can fit the rest
 of the variable good stars to the model to get distances to all the stars.
 '''
 
+# galaxies that are excluded from analysis because they aren't really a galaxy
+# e.g. 2 or 3 galaxies that are bunched up together, or new earth galaxy stars
+invalidGxyIndices = {"Top": [4,6,8],
+                     "Bottom": [8,15],
+                     "Left": [0,7,8,10,11,15,18,25], 
+                     "Right": [1,3,5,6,7,8,12,13],
+                     "Front": [0,6,34,35],
+                     "Back": [0,1,3,4,5,6,11,13,14,16]
+                     }
+
 '''                 BEGIN GALAXY HR AND DISTANCE SECTION            '''
 gxy_distances = [] # distance of each galaxy
 gxy_bounds  = [] # lower and upper bounds of distance, from uncertainty
 
 for gxy_index in galaxies:
-    galaxy = stars[stars.Galaxy == gxy_index]
+    if gxy_index not in invalidGxyIndices[camera]:
+        galaxy = stars[stars.Galaxy == gxy_index]
+        
+        # get H-R diagram of galaxy
+        galaxy.m0, galaxy.m1, galaxy.m2 = (np.log10(galaxy.BlueF), 
+                                           np.log10(galaxy.GreenF), 
+                                           np.log10(galaxy.RedF) ) 
+        galaxy.colour = galaxy.m2 - galaxy.m0
+        
+        if plotHRs:
+            # plot uncalibrated HR diagram
+            plt.scatter(galaxy.colour,galaxy.m1)
+            plt.ylabel('Log Flux 1')
+            plt.xlabel('Log Flux 2 - Log Flux 0')
+            plt.title(f"HR diagram of galaxy {gxy_index}, {camera.lower()} camera")
+            plt.show()
+        
+        # offset by difference in max
+        dm = np.max(goodStars.abs_mag) - np.max(galaxy.m1)
+        delta_dm = 0.1 # uncertainty (eye test) # NEED TO FINISH
+        
+        galaxyDist = np.power(10, dm/2)
+        gxy_distances.append(galaxyDist)
+        galaxyBounds = np.power( 10, np.array([dm-delta_dm, dm+delta_dm])/2 )
+        gxy_bounds.append(galaxyBounds)
     
-    # get H-R diagram of galaxy
-    galaxy.m0, galaxy.m1, galaxy.m2 = (np.log10(galaxy.BlueF), 
-                                       np.log10(galaxy.GreenF), 
-                                       np.log10(galaxy.RedF) ) 
-    galaxy.colour = galaxy.m2 - galaxy.m0
-    
-    if plotHRs:
-        # plot uncalibrated HR diagram
-        plt.scatter(galaxy.colour,galaxy.m1)
-        plt.ylabel('Log Flux 1')
-        plt.xlabel('Log Flux 2 - Log Flux 0')
-        plt.title(f"HR diagram of galaxy {gxy_index}, {camera.lower()} camera")
-        plt.show()
-    
-    # offset by difference in max
-    dm = np.max(goodStars.abs_mag) - np.max(galaxy.m1)
-    delta_dm = 0.1 # uncertainty (eye test) # NEED TO FINISH
-    
-    galaxyDist = np.power(10, dm/2)
-    gxy_distances.append(galaxyDist)
-    galaxyBounds = np.power( 10, np.array([dm-delta_dm, dm+delta_dm])/2 )
-    gxy_bounds.append(galaxyBounds)
-
-    if plotHRcalibration:
-        plt.scatter( goodStars.colour, goodStars.abs_mag, 
-                     color = 'C1') # calibration stars
-        plt.scatter( galaxy.colour, galaxy.m1 + dm ) # galaxy
-        plt.ylabel('Log Flux 1')
-        plt.xlabel('Log Flux 2 - Log Flux 0')
-        plt.title(f"HR calibration of galaxy {gxy_index}, {camera.lower()} camera")
-        plt.legend(["Benchmark", "Cluster"])
-        plt.show()
+        if plotHRcalibration:
+            plt.scatter( goodStars.colour, goodStars.abs_mag, 
+                         color = 'C1') # calibration stars
+            plt.scatter( galaxy.colour, galaxy.m1 + dm ) # galaxy
+            plt.ylabel('Log Flux 1')
+            plt.xlabel('Log Flux 2 - Log Flux 0')
+            plt.title(f"HR calibration of galaxy {gxy_index}, {camera.lower()} camera")
+            plt.legend(["Benchmark", "Cluster"])
+            plt.show()
 
 '''                 BEGIN GALAXY ROT CURVE SECTION            '''
 gxy_speeds = []
 
 for gxy_index in galaxies:
-    galaxy = stars[stars.Galaxy == gxy_index]
-    
-    meanRV = np.mean(galaxy.RadialVelocity)
-    gxy_speeds.append(meanRV)
-    galaxy.netVel = galaxy.RadialVelocity - meanRV
-    
-    if plotRadVel:
-        plt.scatter(galaxy.X, galaxy.Y, c = galaxy.netVel, 
-                    cmap = mpl.cm.seismic) # let's overplot the radial velocities
-        cbar = plt.colorbar()
-        cbar.set_label("Radial velocity (km/s)", rotation = 270)
-        plt.show()
+    if gxy_index not in invalidGxyIndices[camera]:
+        galaxy = stars[stars.Galaxy == gxy_index]
+        
+        meanRV = np.mean(galaxy.RadialVelocity)
+        gxy_speeds.append(meanRV)
+        galaxy.netVel = galaxy.RadialVelocity - meanRV
+        
+        if plotRadVel:
+            plt.scatter(galaxy.X, galaxy.Y, c = galaxy.netVel, 
+                        cmap = mpl.cm.seismic) # let's overplot the radial velocities
+            cbar = plt.colorbar()
+            cbar.set_label("Radial velocity (km/s)", rotation = 270)
+            plt.xlabel("x (pix)"); plt.ylabel("y (pix)"); 
+            plt.title(f"Rot curve of galaxy {gxy_index}, {camera.lower()} camera")
+            plt.show()
 
 
 
