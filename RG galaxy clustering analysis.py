@@ -77,7 +77,7 @@ DEFAULT = [
 '''                 BEGIN USER INPUT SECTION            '''
 
 
-camera = "Back"; cameraData = BACK
+camera = "Top"; cameraData = TOP
 plotPartitions = True # whether to plot clustering scatters
 plotHRs = False # whether to plot HR diagrams of each galaxy
 plotStarCalibration = False # whether to plot master HR diagram for parallax stars
@@ -164,8 +164,8 @@ of the variable good stars to the model to get distances to all the stars.
 
 # galaxies that are excluded from analysis because they aren't really a galaxy
 # e.g. 2 or 3 galaxies that are bunched up together, or new earth galaxy stars
-invalidGxyIndices = {"Top": [4,6,8],
-                     "Bottom": [8,15],
+invalidGxyIndices = {"Top": [4,6,8], 
+                     "Bottom": [6,8,15],
                      "Left": [0,7,8,10,11,15,18,25], 
                      "Right": [1,3,5,6,7,8,12,13],
                      "Front": [0,6,34,35],
@@ -218,6 +218,7 @@ gxy_speeds = []
 
 for gxy_index in galaxies:
     if gxy_index not in invalidGxyIndices[camera]:
+        
         galaxy = stars[stars.Galaxy == gxy_index]
         
         meanRV = np.mean(galaxy.RadialVelocity)
