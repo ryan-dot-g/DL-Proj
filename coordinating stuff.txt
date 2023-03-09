@@ -1,0 +1,24 @@
+DYLAN CODE OUTPUT
+
+stars - data frame with distances and uncertainties for every variable star, using period-luminosity relationship
+
+
+RYAN CODE OUTPUT
+
+same thing for every star in a good galaxy
+
+galaxies - dataframe with positions, distances, uncertainties of each galaxy using H-R diagram fitting
+
+
+PARALLAX MASTER STAR CODE OUTPUT
+same thing 
+
+
+
+
+ryan
+create galaxy class which has galaxy.stars, galaxy.distance, galaxy.meanRV, and uncertainties
+sinead can use this for rot curves
+
+then calibrate the x-ray flashes using mine and dylans data
+then calibrate the fuzzies 
