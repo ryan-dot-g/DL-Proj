@@ -80,7 +80,7 @@ camera = "Bottom"; cameraData = BOTTOM
 plotPartitions = False # whether to plot clustering scatters
 plotHRs = False # whether to plot HR diagrams of each galaxy
 plotStarCalibration = False # whether to plot master HR diagram for parallax stars
-plotHRcalibration = False # whether to plot fit of HR diagram against star calibration
+plotHRcalibration = True # whether to plot fit of HR diagram against star calibration
 plotRadVel = True # whether to plot radial velocity graphs of each galaxy
 
 '''                 BEGIN ACTUAL CLUSTERING SECTION            '''
@@ -151,6 +151,15 @@ if plotStarCalibration:
     plt.ylabel('Absolute magnitude')
     plt.title("Absolute-magnitude calibrated stars")
     plt.show()
+    
+'''
+DYLAN. The dataframe goodStars (above) has a bunch of stars and distances to each star,
+which was calibrated using parallax. Out of all the variable stars, some will be
+in the goodStars dataframe. You KNOW the distance for the variable good stars. 
+Then you can use this to calibrate and get intrinsic luminosity from the variable good stars
+to create a period-intrinsic luminosity relationship. Then you can fit the rest
+of the variable good stars to the model to get distances to all the stars.
+'''
 
 '''                 BEGIN GALAXY HR AND DISTANCE SECTION            '''
 gxy_distances = [] # distance of each galaxy
