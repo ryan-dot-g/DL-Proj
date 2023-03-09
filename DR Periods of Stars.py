@@ -46,7 +46,7 @@ time, flux = data.Time, data.NormalisedFlux # just extract the columns as variab
 dt = np.median(np.diff(time))
 print('Nyquist Limit',0.5/dt,'cycles per hour') # can't get frequencies higher than the Nyquist limit
 
-plt.title('Period Luminosity of Star')
+plt.title('Period Luminosity of Star ')
 plt.plot(time,flux,'.',markersize=16)
 plt.xlabel('Time (h)')
 plt.ylabel('Relative Flux')
@@ -133,7 +133,7 @@ h = plt.plot(variable_colour,abs_mag_v,'.C2',marker='*',markersize=10)
 plt.legend([s, h],['Steady','Variable'])
 plt.ylabel('Log Flux 1')
 plt.xlabel('Log Flux 2 - Log Flux 0')  
-""" HR DIAGRAM WITH VARIABLE STARS START """
+""" HR DIAGRAM WITH VARIABLE STARS END """
 
 
 
