@@ -39,7 +39,7 @@ ddir = ddir_stars + '/Variable_Star_Data/'
 """ STAR FLUX PERIOD GRAPH START """
 plt.figure()
 fname = 'FrontS017978.csv' # put your filename here
-star_name = fname[:-3]
+star_name = fname[:-4]
 
 data = pd.read_csv(ddir+fname) # load in CSV data as a Pandas object
 print(data.keys()) # see what's in it
@@ -68,7 +68,7 @@ print('Best period: %.2f h' % (1/freqs[np.argmax(power)]))
 plt.plot(freqs,power)
 plt.xlabel('Frequency (c/h)')
 plt.ylabel('LS Power')
-plt.title('LS Periodogram for' + star_name)
+plt.title('LS Periodogram for star ' + star_name)
 plt.show()
 """ LOMB-SCARGLE GRAPH END """
 
