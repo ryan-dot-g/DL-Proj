@@ -39,6 +39,7 @@ ddir = ddir_stars + '/Variable_Star_Data/'
 """ STAR FLUX PERIOD GRAPH START """
 plt.figure()
 fname = 'FrontS017978.csv' # put your filename here
+star_name = fname[:-3]
 
 data = pd.read_csv(ddir+fname) # load in CSV data as a Pandas object
 print(data.keys()) # see what's in it
@@ -46,10 +47,11 @@ time, flux = data.Time, data.NormalisedFlux # just extract the columns as variab
 dt = np.median(np.diff(time))
 print('Nyquist Limit',0.5/dt,'cycles per hour') # can't get frequencies higher than the Nyquist limit
 
-plt.title('Period Luminosity of Star ')
+plt.title('Period Luminosity of Star' + star_name)
 plt.plot(time,flux,'.',markersize=16)
 plt.xlabel('Time (h)')
 plt.ylabel('Relative Flux')
+plt.show()
 """ STAR FLUX PERIOD GRAPH END """
 
 
@@ -66,6 +68,8 @@ print('Best period: %.2f h' % (1/freqs[np.argmax(power)]))
 plt.plot(freqs,power)
 plt.xlabel('Frequency (c/h)')
 plt.ylabel('LS Power')
+plt.title('LS Periodogram for' + star_name)
+plt.show()
 """ LOMB-SCARGLE GRAPH END """
 
 
@@ -133,6 +137,9 @@ h = plt.plot(variable_colour,abs_mag_v,'.C2',marker='*',markersize=10)
 plt.legend([s, h],['Steady','Variable'])
 plt.ylabel('Log Flux 1')
 plt.xlabel('Log Flux 2 - Log Flux 0')  
+plt.title('HR Diagram of all Stars')
+plt.show()
+# stars denoted by * in the HR diagram are variable
 """ HR DIAGRAM WITH VARIABLE STARS END """
 
 
@@ -144,5 +151,8 @@ plt.figure()
 plt.plot(variables.Period,abs_mag_v,'.',color='C2')
 plt.xlabel('Period (h)')
 plt.ylabel('Log Flux');
+plt.title('Period-Luminosity Diagram of all Variable Stars')
+plt.show()
+# there should be two distinct sections of variable stars, usually short and long period
 """ PERIOD LUMINSOITY DIAGRAM END """
 
