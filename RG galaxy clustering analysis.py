@@ -221,9 +221,9 @@ for gxy_index in galaxies:
         
         galaxy = stars[stars.Galaxy == gxy_index]
         
-        meanRV = np.mean(galaxy.RadialVelocity)
-        gxy_speeds.append(meanRV)
-        galaxy.netVel = galaxy.RadialVelocity - meanRV
+        medianRV = np.median(galaxy.RadialVelocity)
+        gxy_speeds.append(medianRV)
+        galaxy.netVel = galaxy.RadialVelocity - medianRV
         
         if plotRadVel:
             plt.scatter(galaxy.X, galaxy.Y, c = galaxy.netVel, 
