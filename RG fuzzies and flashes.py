@@ -15,8 +15,6 @@ matplotlib.rcParams['figure.figsize']=(8.0,6.0)    #(6.0,4.0)
 matplotlib.rcParams['font.size']=16              #10 
 # matplotlib.rcParams['savefig.dpi']= 300             #72 
 
-'''                 BEGIN CLUSTERING SECTION            '''
-
 '''                 BEGIN PRELIM DATA SECTION            '''
 from sklearn.cluster import KMeans
     
@@ -61,7 +59,7 @@ BACK = [
     [     7,        7,           1,            1,         1,          1      ]
     ]
 
-# idk fam tbh
+# quite a few clustering problems
 FRONT = [
     [ [pmin,-37],  [-37,-20],  [-37,-20],  [-20,pmax], [-20,pmax] ],
     [ [pmin,pmax], [7.5,pmax], [pmin,7.5], [-30,pmax], [pmin,-30] ],
@@ -74,34 +72,82 @@ DEFAULT = [
     [ 10 ]
     ]
 
-'''                 BEGIN USER INPUT SECTION            '''
+# galaxies that are excluded from analysis because they aren't really a galaxy
+# e.g. 2 or 3 galaxies that are bunched up together, or new earth galaxy stars
+invalidGxyIndices = {"Top": [4,6,8], 
+                     "Bottom": [6,8,15],
+                     "Left": [0,7,8,10,11,15,18,25], 
+                     "Right": [1,3,5,6,7,8,12,13],
+                     "Front": [0,6,34,35],
+                     "Back": [0,1,3,4,5,6,11,13,14,16]
+                     }
 
-plotHubble = True
 
-CAMERAS = {"Top":TOP,"Bottom":BOTTOM,"Left":LEFT,
-           "Right":RIGHT,"Front":FRONT,"Back":BACK}
+'''                 BEGIN RAW UNCERTAINTY SECTION           '''
+de_parallax = 0.001 # parallax uncertainty, in arcseconds
+de_flux_pct = 0.01 # percentage uncertainty of flux, in W/nm/m^2
 
+'''                 BEGIN DATA COLLECTION SECTION            '''
+CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"] 
+
+# PLOTTING BOOLS
+plotHubble = True # whether to plot scatter for hubbles constant 
+
+
+# dictionary linking each camera to the (xmin,xmax,ymin,ymax,n_galaxies)
+# data which partitions the camera's field into sections that can be well
+# clustered into galaxies
+cam_partition_data = {"Top":TOP,"Bottom":BOTTOM,"Left":LEFT,
+                      "Right":RIGHT,"Front":FRONT,"Back":BACK}
+
+
+# dictionary { camera: dataframe of all stars from that camera }
 STARS = {}
 
-OBJ_DISTANCES = {}
-OBJ_SPEEDS = {}
+# dictionaries {camera: dictionary {galaxy index: data about that galaxy} }
+GAL_DISTANCES = {} # distance from NE to each galaxy
+GAL_RV = {} # median radial velocity of all stars in each galaxy. 
+# Median excludes dodgy outlier stars not actually in gal
+GAL_CENTERS = {} # (x,y) median position of all stars in galaxy, proxy for galactic center
 
-GALACTIC_CENTERS = {}
+'''             STAR DISTANCE CALIBRATION SECTION       '''
+parallaxCutoff = 0.01 # minimum parallax to be a valid star for distance calibration
+
+allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS ) # super dataframe containing all stars
+goodStars = allStarsDf[allStarsDf.Parallax > parallaxCutoff] # calibrate with star if sufficient parallax
+goodStars["m0"], goodStars["m1"], goodStars["m2"] = (np.log10(goodStars.BlueF),
+                                                     np.log10(goodStars.GreenF),
+                                                     np.log10(goodStars.RedF)) # different color fluxes
+goodStars["colour"] = goodStars.m2 - goodStars.m0
+
+
+goodStars["dist"] = 1/goodStars.Parallax # distance = 1/parallax where parallax in arcseconds and d in parsec
+goodStars["de_dist"] = goodStars.dist * de_parallax / goodStars.Parallax # uncertainty propagation
+
+goodStars["abs_mag"] = goodStars.m1 + 2 * np.log10(goodStars.dist) # absolute magnitude using log scale
+goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
+                                  ((2/np.log(10))*goodStars.de_dist/goodStars.dist)**2   ) # uncertainty prop
 
 '''                 BEGIN ACTUAL CLUSTERING SECTION            '''
 
-for camera,cameraData in CAMERAS.items():
+for camera in CAMERAS:
+    cameraData = cam_partition_data[camera]
     
-    GALACTIC_CENTERS[camera] = {}
+    GAL_DISTANCES[camera] = {}
+    GAL_RV[camera] = {}
+    GAL_CENTERS[camera] = {}
 
     stars = pd.read_csv(ddir + camera + '\\Star_Data.csv') 
+    STARS[camera] = stars
     
     gno = 0 # how many galaxies already found
     for i in range(len(cameraData[0])):
+        # getting partition data for each partition of each camera
         xmin,xmax = cameraData[0][i]
         ymin,ymax = cameraData[1][i]
         ngalaxies = cameraData[2][i]
         
+        # bool whether each star is in partition, then select the star partition
         partitionMask = (xmin <= stars.X) * (stars.X < xmax) * \
                         (ymin <= stars.Y) * (stars.Y < ymax) 
         starPartition = stars[ partitionMask ]
@@ -112,46 +158,18 @@ for camera,cameraData in CAMERAS.items():
         km.fit(R)
         
         # update master dataframe with the new galaxy
-        starPartition["Galaxy"] = gno + km.labels_
-        gno += np.max(km.labels_) + 1
+        starPartition["Galaxy"] = gno + km.labels_ # new galaxy number
+        gno += np.max(km.labels_) + 1 # update galaxy number
         stars.loc[partitionMask, "Galaxy"] = starPartition.Galaxy
         
     stars.Galaxy = stars.Galaxy.astype(int)
     galaxies = set(stars.Galaxy)
+        
     
-    '''             STAR DISTANCE CALIBRATION SECTION       '''
-    
-    import glob
-    all_stars = glob.glob(ddir + '*/Star_Data.csv') # all star data
-    parallaxCutoff = 0.01 # minimum parallax to be a valid star for distance calibration
-    
-    allStarsDf = pd.concat( pd.read_csv(catalog) for catalog in all_stars ) # super dataframe containing all stars
-    goodStars = allStarsDf[allStarsDf.Parallax > parallaxCutoff] # calibrate with star if sufficient parallax
-    goodStars["m0"], goodStars["m1"], goodStars["m2"] = (np.log10(goodStars.BlueF),
-                                                         np.log10(goodStars.GreenF),
-                                                         np.log10(goodStars.RedF)) # different color fluxes
-    goodStars["colour"] = goodStars.m2 - goodStars.m0
-    goodStars["dist"] = 1/goodStars.Parallax # distance = 1/parallax where parallax in arcseconds and d in parsec
-    goodStars["abs_mag"] = goodStars.m1 + 2 * np.log10(goodStars.dist) # absolute magnitude using log scale
-    
-    # galaxies that are excluded from analysis because they aren't really a galaxy
-    # e.g. 2 or 3 galaxies that are bunched up together, or new earth galaxy stars
-    invalidGxyIndices = {"Top": [4,6,8], 
-                         "Bottom": [6,8,15],
-                         "Left": [0,7,8,10,11,15,18,25], 
-                         "Right": [1,3,5,6,7,8,12,13],
-                         "Front": [0,6,34,35],
-                         "Back": [0,1,3,4,5,6,11,13,14,16]
-                         }
-    
-    '''                 BEGIN GALAXY HR AND DISTANCE SECTION            '''
-    gxy_distances = {} # distance of each galaxy
-    gxy_bounds  = [] # lower and upper bounds of distance, from uncertainty
-    gxy_speeds = {}
-    
+    '''                 BEGIN GALAXY HR AND DISTANCE SECTION            ''' 
     for gxy_index in galaxies:
-        if gxy_index not in invalidGxyIndices[camera]:
-            galaxy = stars[stars.Galaxy == gxy_index]
+        if gxy_index not in invalidGxyIndices[camera]: # exclude partitions that don't contain a good galaxy
+            galaxy = stars[stars.Galaxy == gxy_index] # select galaxy
             
             # get H-R diagram of galaxy
             galaxy.m0, galaxy.m1, galaxy.m2 = (np.log10(galaxy.BlueF), 
@@ -164,24 +182,15 @@ for camera,cameraData in CAMERAS.items():
             delta_dm = 0.1 # uncertainty (eye test) # NEED TO FINISH
             
             galaxyDist = np.power(10, dm/2)
-            gxy_distances[gxy_index] = galaxyDist
+            GAL_DISTANCES[camera][gxy_index] = galaxyDist
 
             galaxyBounds = np.power( 10, np.array([dm-delta_dm, dm+delta_dm])/2 )
-            gxy_bounds.append(galaxyBounds)
+            
             
             medianRV = np.median(galaxy.RadialVelocity)
-
-            gxy_speeds[gxy_index] = medianRV
+            GAL_RV[camera][gxy_index] = medianRV
             
-            GALACTIC_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
-
-    OBJ_DISTANCES[camera] = gxy_distances
-    OBJ_SPEEDS[camera] = gxy_speeds
-
-    STARS[camera] = stars
-    
-
-
+            GAL_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
 
 def get_galaxy(X,Y,stars,camera):
     ''' Takes X,Y pixel location of a flash. Returns the number galaxy it belongs
@@ -192,7 +201,7 @@ def get_galaxy(X,Y,stars,camera):
     (b) the galaxy it is contained in is invalid in the list of invalid galaxies.
     Currently not implemented'''
     
-    gcenters = GALACTIC_CENTERS[camera]
+    gcenters = GAL_CENTERS[camera]
     gdistances = {i: np.linalg.norm((X-r[0],Y-r[1])) for i,r in gcenters.items()}
     
     closest_galaxy = [i for i,d in gdistances.items() if d==min(dist for dist in gdistances.values())][0]
@@ -216,8 +225,8 @@ nf1, nf2 = flashes.loc[35], flashes.loc[46] # selecting the 2 super bright flash
 g1 = get_galaxy(nf1.X, nf1.Y, STARS[nf1.Direction], nf1.Direction) 
 g2 = get_galaxy(nf2.X, nf2.Y, STARS[nf2.Direction], nf2.Direction) 
 
-d1 = OBJ_DISTANCES[nf1.Direction][g1]  # distance of near flash 1
-d2 = OBJ_DISTANCES[nf2.Direction][g2] # distance of near flash 2
+d1 = GAL_DISTANCES[nf1.Direction][g1]  # distance of near flash 1
+d2 = GAL_DISTANCES[nf2.Direction][g2] # distance of near flash 2
 
 # absolute photon counts, scaled by distance using inverse-square law
 absPC1 = nf1["Photon-Count"]*(d1)**2 
@@ -230,8 +239,8 @@ flashes["Distance"] = np.sqrt(absPC/flashes["Photon-Count"])
 
 
 '''     BEGIN FUZZY CALIBRATION SECTION             '''
-FUZ_DISTANCES = {cam:{} for cam in CAMERAS.keys()}
-FUZ_RADVEL = {cam:{} for cam in CAMERAS.keys()}
+FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
+FUZ_RADVEL = {cam:{} for cam in CAMERAS}
 
 # method below gives every fuzzy a distance by assigning nearest flash
 # for camera in CAMERAS.keys():
@@ -259,12 +268,6 @@ for i,flash in flashes.iterrows():
     FUZ_DISTANCES[camera][closestFuzzy] = flash.Distance
     FUZ_RADVEL[camera][closestFuzzy] = fuzzies.loc[closestFuzzy].RadialVelocity
     
-        
-# for camera in CAMERAS.keys():
-#     Dist = [d for d in FUZ_DISTANCES[camera].values()]
-#     RV = [rv for rv in FUZ_RADVEL[camera].values()]
-#     plt.scatter(Dist,RV)
-#     plt.show()
         
 # flash distances and radial velocities 
 fld = np.array([d for camDistances in FUZ_DISTANCES.values() for d in camDistances.values()])
