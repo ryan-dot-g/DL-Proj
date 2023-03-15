@@ -86,6 +86,13 @@ invalidGxyIndices = {"Top": [4,6,8],
 '''                 BEGIN RAW UNCERTAINTY SECTION           '''
 de_parallax = 0.001 # parallax uncertainty, in arcseconds
 de_flux_pct = 0.01 # percentage uncertainty of flux, in W/nm/m^2
+de_offset = np.sqrt( 2* (1/np.log(10) * de_flux_pct)**2 ) # error of offset (magnitude)
+
+de_X, de_Y = 0.0001, 0.0001 # uncertainty of X,Y positions in sky, in degrees
+de_RV = 0.03 # uncertainty of radial velocity, in km/s
+
+de_PC = 174 # uncertainty in photon counts
+de_fuzzy_RV = 0.1 # uncertainty in radial velocity
 
 '''                 BEGIN DATA COLLECTION SECTION            '''
 CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"] 
@@ -102,13 +109,24 @@ cam_partition_data = {"Top":TOP,"Bottom":BOTTOM,"Left":LEFT,
 
 
 # dictionary { camera: dataframe of all stars from that camera }
-STARS = {}
+STARS = {camera:None for camera in CAMERAS}
 
 # dictionaries {camera: dictionary {galaxy index: data about that galaxy} }
-GAL_DISTANCES = {} # distance from NE to each galaxy
-GAL_RV = {} # median radial velocity of all stars in each galaxy. 
+
+# distance from NE to each galaxy
+GAL_DISTANCES = {camera:{} for camera in CAMERAS} 
+
+# median radial velocity of all stars in each galaxy. 
 # Median excludes dodgy outlier stars not actually in gal
-GAL_CENTERS = {} # (x,y) median position of all stars in galaxy, proxy for galactic center
+GAL_RV = {camera:{} for camera in CAMERAS}
+ 
+# (x,y) median position of all stars in galaxy, proxy for galactic center
+GAL_CENTERS = {camera:{} for camera in CAMERAS} 
+
+# uncertainty dictionaries
+DE_GAL_DISTANCES = {camera:{} for camera in CAMERAS}
+DE_GAL_RV = {camera:{} for camera in CAMERAS}
+DE_GAL_CENTERS = {camera:{} for camera in CAMERAS}
 
 '''             STAR DISTANCE CALIBRATION SECTION       '''
 parallaxCutoff = 0.01 # minimum parallax to be a valid star for distance calibration
@@ -131,11 +149,7 @@ goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
 '''                 BEGIN ACTUAL CLUSTERING SECTION            '''
 
 for camera in CAMERAS:
-    cameraData = cam_partition_data[camera]
-    
-    GAL_DISTANCES[camera] = {}
-    GAL_RV[camera] = {}
-    GAL_CENTERS[camera] = {}
+    cameraData = cam_partition_data[camera]  
 
     stars = pd.read_csv(ddir + camera + '\\Star_Data.csv') 
     STARS[camera] = stars
@@ -178,19 +192,23 @@ for camera in CAMERAS:
             galaxy.colour = galaxy.m2 - galaxy.m0
             
             # offset by difference in max
-            dm = np.max(goodStars.abs_mag) - np.max(galaxy.m1)
-            delta_dm = 0.1 # uncertainty (eye test) # NEED TO FINISH
+            galacticOffset = np.max(goodStars.abs_mag) - np.max(galaxy.m1)
+            de_offset; # uncertainty propagation
             
-            galaxyDist = np.power(10, dm/2)
+            # calculate galaxy distance and uncertainty
+            galaxyDist = np.power(10, galacticOffset/2) 
             GAL_DISTANCES[camera][gxy_index] = galaxyDist
-
-            galaxyBounds = np.power( 10, np.array([dm-delta_dm, dm+delta_dm])/2 )
+            de_galaxyDist = galaxyDist * np.log(10)/2 * de_offset
+            DE_GAL_DISTANCES[camera][gxy_index] = de_galaxyDist
             
-            
+            # calculate galaxy radial velocity and uncertainty
             medianRV = np.median(galaxy.RadialVelocity)
             GAL_RV[camera][gxy_index] = medianRV
+            DE_GAL_RV[camera][gxy_index] = de_RV
             
+            # calculate position of galactic center and uncertainty
             GAL_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
+            DE_GAL_CENTERS[camera][gxy_index] = (de_X, de_Y)
 
 def get_galaxy(X,Y,stars,camera):
     ''' Takes X,Y pixel location of a flash. Returns the number galaxy it belongs
@@ -226,21 +244,35 @@ g1 = get_galaxy(nf1.X, nf1.Y, STARS[nf1.Direction], nf1.Direction)
 g2 = get_galaxy(nf2.X, nf2.Y, STARS[nf2.Direction], nf2.Direction) 
 
 d1 = GAL_DISTANCES[nf1.Direction][g1]  # distance of near flash 1
+de_d1 = DE_GAL_DISTANCES[nf1.Direction][g1] # uncertainty
 d2 = GAL_DISTANCES[nf2.Direction][g2] # distance of near flash 2
+de_d2 = DE_GAL_DISTANCES[nf2.Direction][g2] 
 
 # absolute photon counts, scaled by distance using inverse-square law
 absPC1 = nf1["Photon-Count"]*(d1)**2 
+de_absPC1 = absPC1 * np.sqrt( (de_PC/nf1["Photon-Count"])**2 + \
+                             (2*de_d1/d1)**2 ) # uncertainty prop
 absPC2 = nf2["Photon-Count"]*(d2)**2
+de_absPC2 = absPC2 * np.sqrt( (de_PC/nf2["Photon-Count"])**2 + \
+                             (2*de_d2/d2)**2 ) # uncertainty prop
 
-absPC = np.mean([absPC1,absPC2]) # absolute magnitude at 1 parsec
+absPC = np.mean([absPC1, absPC2]) # absolute magnitude at 1 parsec
+de_absPC = np.std([absPC1,absPC2]) # uncertainty
+
+# drop the 2 nearby flashes from the dataframe since they were used for calibration
+flashes = flashes.drop(35); flashes = flashes.drop(46)
 
 # give every flash a distance using inverse square law
 flashes["Distance"] = np.sqrt(absPC/flashes["Photon-Count"])
+flashes["de_Distance"] = flashes.Distance * np.sqrt( (2*de_PC/flashes["Photon-Count"])**2 + \
+                                                    (de_absPC/absPC)**2 ) # unc
 
 
 '''     BEGIN FUZZY CALIBRATION SECTION             '''
 FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
+DE_FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
 FUZ_RADVEL = {cam:{} for cam in CAMERAS}
+DE_FUZ_RADVEL = {cam:{} for cam in CAMERAS}
 
 # method below gives every fuzzy a distance by assigning nearest flash
 # for camera in CAMERAS.keys():
@@ -264,30 +296,47 @@ for i,flash in flashes.iterrows():
     camera = flash.Direction
     fuzzies = pd.read_csv(f'DATA//{camera}/Distant_Galaxy_Data.csv')
     
+    # find closest fuzzy to each flash
     closestFuzzy = get_obj(flash.X,flash.Y,fuzzies)
+    
+    # assign distance and radial velocity of the fuzzy
     FUZ_DISTANCES[camera][closestFuzzy] = flash.Distance
+    DE_FUZ_DISTANCES[camera][closestFuzzy] = flash.de_Distance
+    
     FUZ_RADVEL[camera][closestFuzzy] = fuzzies.loc[closestFuzzy].RadialVelocity
+    DE_FUZ_RADVEL[camera][closestFuzzy] = de_fuzzy_RV 
     
         
 # flash distances and radial velocities 
-fld = np.array([d for camDistances in FUZ_DISTANCES.values() for d in camDistances.values()])
-flrv = np.array([rv for camRV in FUZ_RADVEL.values() for rv in camRV.values()])
+flash_distance_parsec = np.array([d for camDistances in FUZ_DISTANCES.values() for d in camDistances.values()])
+de_flash_distance_parsec = np.array([de_d for de_camDistances in DE_FUZ_DISTANCES.values() for de_d in de_camDistances.values()])
 
-fldMpc = fld/10**6 # distances in megaparsecs
+flash_RV = np.array([rv for camRV in FUZ_RADVEL.values() for rv in camRV.values()])
+de_flash_RV = np.array([de_rv for de_camRV in DE_FUZ_RADVEL.values() for de_rv in de_camRV.values()])
 
-poly = np.polyfit(fldMpc,flrv,1)
-H0 = poly[0]
+
+# exclude galaxies in local cluster
+nonlocal_cluster_flashes = [True for i in flash_RV] # (flash_distance_parsec>0.05*10**6)
+flash_distance_parsec = flash_distance_parsec[nonlocal_cluster_flashes]
+de_flash_distance_parsec = de_flash_distance_parsec[nonlocal_cluster_flashes]
+flash_RV = flash_RV[nonlocal_cluster_flashes]
+de_flash_RV = de_flash_RV[nonlocal_cluster_flashes]
+
+# distances, uncertainties in megaparsecs for Hubbles constant units
+flash_distance_Mpc = flash_distance_parsec/10**6 
+de_flash_distance_Mpc = de_flash_distance_parsec/10**6
+
+bestFit = np.polyfit(flash_distance_Mpc,flash_RV,1) # line of best fit
+H0 = bestFit[0]
 print(f"Hubble's constant is {H0}")
-predRV = np.polyval(poly,fldMpc)
+predRV = np.polyval(bestFit,flash_distance_Mpc)
 
 if plotHubble:
-    plt.scatter(fldMpc, flrv)
-    plt.plot(fldMpc, predRV, '--')
+    plt.scatter(flash_distance_Mpc, flash_RV)
+    plt.plot(flash_distance_Mpc, predRV, '--')
     plt.xlabel("Distance (Mpc)"); plt.ylabel("Radial velocity (km/s)")
     plt.title("Distant galaxy movement to determine Hubble's constant")
     plt.show()
-
-
 
 
 
