@@ -98,8 +98,9 @@ de_fuzzy_RV = 0.1 # uncertainty in radial velocity
 CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"] 
 
 # PLOTTING BOOLS
-plotHubble = True # whether to plot scatter for hubbles constant 
-
+plotHubble = False # whether to plot scatter for hubbles constant 
+plotHomogeneity = True # whether to plot scatter for homogeneity demonstration
+plotIsotropy = True
 
 # dictionary linking each camera to the (xmin,xmax,ymin,ymax,n_galaxies)
 # data which partitions the camera's field into sections that can be well
@@ -250,10 +251,10 @@ de_d2 = DE_GAL_DISTANCES[nf2.Direction][g2]
 
 # absolute photon counts, scaled by distance using inverse-square law
 absPC1 = nf1["Photon-Count"]*(d1)**2 
-de_absPC1 = absPC1 * np.sqrt( (de_PC/nf1["Photon-Count"])**2 + \
+de_absPC1 = absPC1 * np.sqrt( 1/nf1["Photon-Count"] + \
                              (2*de_d1/d1)**2 ) # uncertainty prop
 absPC2 = nf2["Photon-Count"]*(d2)**2
-de_absPC2 = absPC2 * np.sqrt( (de_PC/nf2["Photon-Count"])**2 + \
+de_absPC2 = absPC2 * np.sqrt( 1/nf2["Photon-Count"] + \
                              (2*de_d2/d2)**2 ) # uncertainty prop
 
 absPC = np.mean([absPC1, absPC2]) # absolute magnitude at 1 parsec
@@ -264,7 +265,7 @@ flashes = flashes.drop(35); flashes = flashes.drop(46)
 
 # give every flash a distance using inverse square law
 flashes["Distance"] = np.sqrt(absPC/flashes["Photon-Count"])
-flashes["de_Distance"] = flashes.Distance * np.sqrt( (2*de_PC/flashes["Photon-Count"])**2 + \
+flashes["de_Distance"] = flashes.Distance * np.sqrt( 4/flashes["Photon-Count"] + \
                                                     (de_absPC/absPC)**2 ) # unc
 
 
@@ -274,24 +275,7 @@ DE_FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
 FUZ_RADVEL = {cam:{} for cam in CAMERAS}
 DE_FUZ_RADVEL = {cam:{} for cam in CAMERAS}
 
-# method below gives every fuzzy a distance by assigning nearest flash
-# for camera in CAMERAS.keys():
-#     fuzzies = pd.read_csv(f'DATA//{camera}/Distant_Galaxy_Data.csv')
-#     FUZZIES[camera] = fuzzies
-    
-#     FUZ_DISTANCES[camera] = {}
-#     FUZ_RADVEL[camera] = {}
-#     for i,fuzzy in fuzzies.iterrows():
-#         # locate closest flash and get its distance
-#         closestFlash = get_obj(fuzzy.X,fuzzy.Y,flashes,camera) # need to fiz and index flaashes with camera first
-#         distance = flashes.loc[closestFlash].Distance
-        
-#         # assign fuzzy galaxy that distance, record rad vel
-#         FUZ_DISTANCES[camera][i] = distance
-#         FUZ_RADVEL[camera][i] = fuzzy.RadialVelocity
-
 # method below gives only the closest fuzzy to each flash a distance
-
 for i,flash in flashes.iterrows():
     camera = flash.Direction
     fuzzies = pd.read_csv(f'DATA//{camera}/Distant_Galaxy_Data.csv')
@@ -306,6 +290,8 @@ for i,flash in flashes.iterrows():
     FUZ_RADVEL[camera][closestFuzzy] = fuzzies.loc[closestFuzzy].RadialVelocity
     DE_FUZ_RADVEL[camera][closestFuzzy] = de_fuzzy_RV 
     
+    
+'''     BEGIN HUBBLES CONSTANT REGRESSION CALCULATION       '''
         
 # flash distances and radial velocities 
 flash_distance_parsec = np.array([d for camDistances in FUZ_DISTANCES.values() for d in camDistances.values()])
@@ -316,7 +302,7 @@ de_flash_RV = np.array([de_rv for de_camRV in DE_FUZ_RADVEL.values() for de_rv i
 
 
 # exclude galaxies in local cluster
-nonlocal_cluster_flashes = [True for i in flash_RV] # (flash_distance_parsec>0.05*10**6)
+nonlocal_cluster_flashes = (flash_distance_parsec>0.05*10**6) #  [True for i in flash_RV]
 flash_distance_parsec = flash_distance_parsec[nonlocal_cluster_flashes]
 de_flash_distance_parsec = de_flash_distance_parsec[nonlocal_cluster_flashes]
 flash_RV = flash_RV[nonlocal_cluster_flashes]
@@ -326,17 +312,175 @@ de_flash_RV = de_flash_RV[nonlocal_cluster_flashes]
 flash_distance_Mpc = flash_distance_parsec/10**6 
 de_flash_distance_Mpc = de_flash_distance_parsec/10**6
 
-bestFit = np.polyfit(flash_distance_Mpc,flash_RV,1) # line of best fit
-H0 = bestFit[0]
-print(f"Hubble's constant is {H0}")
-predRV = np.polyval(bestFit,flash_distance_Mpc)
+# simplifying to X, Y for abstraction of line of best fit calc
+X = flash_distance_Mpc
+de_X = de_flash_distance_Mpc 
+Y = flash_RV
+de_Y = de_flash_RV 
+
+def LOBF(X, de_X, Y, de_Y, n_trials):
+    ''' Returns m, de_m, c, de_c, using monte-carlo estimation of line of best
+    fit from x and y uncertainties, doing n trials. Also returns lines, list of
+    lines of best fit from every single trial (to plot density curve)'''
+    M = np.zeros((n_trials,))
+    C = np.zeros((n_trials,))
+    lines = np.zeros((n_trials,2))
+    J = len(X) # no of points
+    
+    for i in range(n_trials):
+        # noisy X and noisy Y
+        x_trial = X + np.random.randn(J) * de_X
+        y_trial = Y + np.random.randn(J) * de_Y
+        
+        # line of best fit of noisy data
+        lobf_trial = np.polyfit(x_trial,y_trial,1) 
+        m_trial = lobf_trial[0]; c_trial = lobf_trial[1]
+        
+        # saving lines
+        lines[i] = lobf_trial
+        M[i] = m_trial; C[i] = c_trial
+        
+    # mean of trials as gradient and uncertainty
+    m = np.mean(M); c = np.mean(C)
+    de_m = np.std(M); de_c = np.std(C)
+    
+    return m,de_m,c,de_c,lines
+    
+n_trials = 1000 # number of monte carlo trials
+m,de_m,c,de_c,lines = LOBF( X, de_X, Y,de_Y, n_trials ) # line of best fit for hubbles
+H0 = m; de_H0 = de_m
+print(f"Hubble's constant is {round(H0,2)} +- {round(de_H0,2)} km/s/Mpc")
+print(f"Y-intercept is {round(c,2)} +- {round(de_c,2)} km/s")
+
 
 if plotHubble:
-    plt.scatter(flash_distance_Mpc, flash_RV)
-    plt.plot(flash_distance_Mpc, predRV, '--')
+    # plot data points
+    plt.scatter(X, Y) 
+    plt.errorbar(X,Y, linestyle = 'None', yerr = de_Y, xerr = de_X, )
+    
+    # plot line of best fit
+    predY = np.polyval( [m,c], X )
+    plt.plot( X, predY, color = 'yellow')
+    
+    # plot trial lines of best fit
+    for line in lines:
+        trial_predY = np.polyval(line,X)
+        plt.plot(X, trial_predY, 'r-', alpha = 1/255)
+        
+    # other stuff
     plt.xlabel("Distance (Mpc)"); plt.ylabel("Radial velocity (km/s)")
     plt.title("Distant galaxy movement to determine Hubble's constant")
+    plt.show();
+    
+    
+
+# next
+# give each fuzzy a distance using hubble fit
+# examine homogeneity (galaxy number density per volume). compare with r^3
+# examine isotropy
+# cosmological principle implies no center and nonstatic??
+# big bang?
+
+
+
+'''         ASSIGNING DISTANCE TO ALL FUZZIES           '''
+
+all_fuzzies = pd.concat( pd.read_csv(f'DATA//{camera}/Distant_Galaxy_Data.csv') for camera in CAMERAS ) 
+# camera from each fuzzy
+all_fuzzies["Direction"] = [name.split("DG")[0] for name in all_fuzzies.Name] 
+
+all_fuzzies["Distance"] = all_fuzzies.RadialVelocity / H0
+all_fuzzies["de_Distance"] = all_fuzzies.Distance * np.sqrt( (de_fuzzy_RV/all_fuzzies.RadialVelocity)**2 + \
+                                                         (de_H0/H0)**2 )
+                                                         
+                                                         
+'''              HOMOGENOUS CALCAULTIONS      '''
+                                                         
+# max distance of fuzzy
+maxR = np.max(all_fuzzies.Distance)
+
+# radius bins, and number of galaxies contained in each bin
+R_bins = np.linspace(0, maxR, 11)
+n_galaxies = [np.sum(all_fuzzies.Distance<r) for r in R_bins]
+
+# uncertainty: maximum possible number of galaxies in each bin given distance uncertainty
+upper_bound_ngalaxy = np.array([ np.sum(all_fuzzies.Distance-all_fuzzies.de_Distance<r) for r in R_bins ]) 
+lower_bound_ngalaxy = np.array([ np.sum(all_fuzzies.Distance+all_fuzzies.de_Distance<r) for r in R_bins ])
+de_n_galaxies = np.max([ n_galaxies-lower_bound_ngalaxy, upper_bound_ngalaxy-n_galaxies ],axis=0)
+de_n_galaxies = de_n_galaxies + (de_n_galaxies==0) # giving each nonzero uncertainty
+
+# remove last point because of faintness of flashes that far away
+R_bins = R_bins[:-1]; n_galaxies = n_galaxies[:-1]; de_n_galaxies = de_n_galaxies[:-1]
+
+# get cubic fit
+from scipy.optimize import curve_fit
+cubic = lambda x,a,b,c,d: a*x**3 + b*x**2 + c*x + d
+popt,pcov = curve_fit( cubic, R_bins, n_galaxies, 
+                     sigma = de_n_galaxies, absolute_sigma = True)
+print(f"Cubic fit a,b,c,d = \n{[round(i,2) for i in popt]} and uncertainties \
+      \n{[round(i,2) for i in np.sqrt(np.diag(pcov))]} ")
+
+if plotHomogeneity:
+    # plot scatter points
+    plt.scatter(R_bins,n_galaxies)
+    plt.errorbar( R_bins, n_galaxies, yerr=de_n_galaxies , linestyle = 'None')
+    
+    # plot fit
+    Xfine = np.linspace(0,max(R_bins),1000)
+    predY = np.polyval(popt,Xfine)
+    plt.plot( Xfine, predY )
+    
+    # other stuff
+    plt.xlabel("Distance from NE galaxy (Mpc)"); 
+    plt.ylabel("Number of galaxies within distance")
+    plt.title("Investigating homogeneity of universe")
+    plt.show()
+    
+
+'''                     ISOTROPIC CALCULATIONS              '''
+# number of galaxies in each radius bin, for each camera
+ngalcam = {camera:[] for camera in CAMERAS}
+de_ngalcam = {camera:[] for camera in CAMERAS}
+
+R_bins_isot = np.linspace( 0, maxR, 11) # less bins since less data in each direction
+for camera in CAMERAS:
+    # selecting relevant fuzzies
+    cam_fuzzies = all_fuzzies[all_fuzzies.Direction == camera]
+    
+    # number of galaxies contained within each radius
+    ngalcam[camera] = [np.sum(cam_fuzzies.Distance<r) for r in R_bins_isot]
+
+    upper_bound_ngalaxy = np.array([ np.sum(cam_fuzzies.Distance-cam_fuzzies.de_Distance<r) for r in R_bins_isot ]) 
+    lower_bound_ngalaxy = np.array([ np.sum(cam_fuzzies.Distance+cam_fuzzies.de_Distance<r) for r in R_bins_isot ])
+    de_ngalcam[camera] = np.max([ ngalcam[camera]-lower_bound_ngalaxy, upper_bound_ngalaxy-ngalcam[camera] ],axis=0)
+    de_ngalcam[camera] = de_ngalcam[camera] + (de_ngalcam[camera]==0) # giving each nonzero uncertainty
+    
+    # remove last point because of faintness of flashes that far away
+    ngalcam[camera] = ngalcam[camera][:-1]
+    de_ngalcam[camera] = de_ngalcam[camera][:-1]
+
+if plotIsotropy:
+    R_bins_isot = R_bins_isot[:-1] # remove last point
+    for camera in CAMERAS:
+        plt.scatter(R_bins_isot, ngalcam[camera], label = camera)
+        plt.errorbar(R_bins_isot, ngalcam[camera], yerr = de_ngalcam[camera], 
+                     linestyle = 'None')
+        
+    plt.xlabel("Distance from NE galaxy (Mpc)"); 
+    plt.ylabel("Number of galaxies within distance")
+    plt.title("Investigating isotropy of universe")
+    plt.legend()
     plt.show()
 
 
 
+
+
+
+
+
+
+
+
+
+    
