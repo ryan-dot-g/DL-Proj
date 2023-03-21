@@ -19,8 +19,9 @@ matplotlib.rcParams['font.size']=16              #10
 
 CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"] 
 de_parallax = 0.001 # parallax uncertainty, in arcseconds
-de_flux_pct = 0.01 # percentage uncertainty of flux, in W/nm/m^2
-de_offset = np.sqrt( 2* (1/np.log(10) * de_flux_pct)**2 ) # error of offset (magnitude)
+PLANE_CAMERAS = ["Left", "Right", "Front", "Back"]
+# theta offsets for stars in the plane
+PLANE_OFFSETS = {"Front":0, "Right":90, "Back":180, "Left":270}
 
 
 '''             STAR DISTANCE CALIBRATION SECTION       '''
@@ -28,15 +29,23 @@ parallaxCutoff = 0.01 # minimum parallax to be a valid star for distance calibra
 
 allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS ) # super dataframe containing all stars
 goodStars = allStarsDf[allStarsDf.Parallax > parallaxCutoff] # calibrate with star if sufficient parallax
-goodStars["m0"], goodStars["m1"], goodStars["m2"] = (np.log10(goodStars.BlueF),
-                                                     np.log10(goodStars.GreenF),
-                                                     np.log10(goodStars.RedF)) # different color fluxes
-goodStars["colour"] = goodStars.m2 - goodStars.m0
-
+goodStars["Direction"] = [name.split("S")[0] for name in goodStars.Name]
 
 goodStars["dist"] = 1/goodStars.Parallax # distance = 1/parallax where parallax in arcseconds and d in parsec
 goodStars["de_dist"] = goodStars.dist * de_parallax / goodStars.Parallax # uncertainty propagation
+    
+planeStars = goodStars[ goodStars.Direction.isin(PLANE_CAMERAS) ]    
+planeStars["theta"] = planeStars.dist + np.array([ PLANE_OFFSETS[camera] for camera in planeStars.Direction ])
+planeStars["x_3d"] = planeStars.dist * np.sin(planeStars.theta/360 * 2*np.pi)
+planeStars["y_3d"] = planeStars.dist * np.cos(planeStars.theta/360 * 2*np.pi)
+planeStars["z_3d"] = planeStars.dist * np.sin(planeStars.Y/360 * 2*np.pi)
 
-goodStars["abs_mag"] = goodStars.m1 + 2 * np.log10(goodStars.dist) # absolute magnitude using log scale
-goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
-                                  ((2/np.log(10))*goodStars.de_dist/goodStars.dist)**2   ) # uncertainty prop
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+ax.scatter( planeStars.x_3d, planeStars.y_3d, planeStars.z_3d )
+plt.show()
+
+
+
+
