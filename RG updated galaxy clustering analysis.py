@@ -177,7 +177,7 @@ for camera in CAMERAS:
         
         # perform clustering fit
         R = np.array([ i for i in zip(*[starPartition.X,starPartition.Y]) ]) # (x,y) coords
-        km = KMeans(n_clusters = ngalaxies)
+        km = KMeans(n_clusters = ngalaxies, random_state = 0)
         km.fit(R)
         
         # update master dataframe with the new galaxy

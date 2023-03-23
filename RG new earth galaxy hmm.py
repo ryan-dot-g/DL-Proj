@@ -35,17 +35,19 @@ goodStars["dist"] = 1/goodStars.Parallax # distance = 1/parallax where parallax 
 goodStars["de_dist"] = goodStars.dist * de_parallax / goodStars.Parallax # uncertainty propagation
     
 planeStars = goodStars[ goodStars.Direction.isin(PLANE_CAMERAS) ]    
-planeStars["theta"] = planeStars.dist + np.array([ PLANE_OFFSETS[camera] for camera in planeStars.Direction ])
+planeStars["theta"] = planeStars.X + np.array([ PLANE_OFFSETS[camera] for camera in planeStars.Direction ])
 planeStars["x_3d"] = planeStars.dist * np.sin(planeStars.theta/360 * 2*np.pi)
 planeStars["y_3d"] = planeStars.dist * np.cos(planeStars.theta/360 * 2*np.pi)
 planeStars["z_3d"] = planeStars.dist * np.sin(planeStars.Y/360 * 2*np.pi)
 
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-ax.scatter( planeStars.x_3d, planeStars.y_3d, planeStars.z_3d )
-plt.show()
+# fig = plt.figure()
+# ax = fig.add_subplot(projection='3d')
+# ax.scatter( planeStars.x_3d, planeStars.y_3d, planeStars.z_3d )
+# plt.show()
 
+plt.scatter(planeStars.x_3d, planeStars.y_3d)
+plt.show()
 
 
 

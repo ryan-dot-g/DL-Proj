@@ -98,7 +98,7 @@ de_fuzzy_RV = 0.1 # uncertainty in radial velocity
 CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"] 
 
 # PLOTTING BOOLS
-plotHubble = False # whether to plot scatter for hubbles constant 
+plotHubble = True # whether to plot scatter for hubbles constant 
 plotHomogeneity = True # whether to plot scatter for homogeneity demonstration
 plotIsotropy = True
 
@@ -169,7 +169,7 @@ for camera in CAMERAS:
         
         # perform clustering fit
         R = np.array([ i for i in zip(*[starPartition.X,starPartition.Y]) ]) # (x,y) coords
-        km = KMeans(n_clusters = ngalaxies)
+        km = KMeans(n_clusters = ngalaxies, random_state = 0)
         km.fit(R)
         
         # update master dataframe with the new galaxy
@@ -370,7 +370,7 @@ if plotHubble:
     # other stuff
     plt.xlabel("Distance (Mpc)"); plt.ylabel("Radial velocity (km/s)")
     plt.title("Distant galaxy movement to determine Hubble's constant")
-    plt.show();
+    plt.show()
     
     
 
@@ -422,15 +422,16 @@ print(f"Cubic fit a,b,c,d = \n{[round(i,2) for i in popt]} and uncertainties \
 
 if plotHomogeneity:
     # plot scatter points
-    plt.scatter(R_bins,n_galaxies)
+    plt.scatter(R_bins,n_galaxies, label = "Measured no. of galaxies")
     plt.errorbar( R_bins, n_galaxies, yerr=de_n_galaxies , linestyle = 'None')
     
     # plot fit
     Xfine = np.linspace(0,max(R_bins),1000)
     predY = np.polyval(popt,Xfine)
-    plt.plot( Xfine, predY )
+    plt.plot( Xfine, predY, label = "Cubic fit" )
     
     # other stuff
+    plt.legend()
     plt.xlabel("Distance from NE galaxy (Mpc)"); 
     plt.ylabel("Number of galaxies within distance")
     plt.title("Investigating homogeneity of universe")
