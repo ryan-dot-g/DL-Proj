@@ -64,10 +64,9 @@ for i, camera in enumerate(CAMERAS):
         azimuth, theta = cube_to_equirect(camera, u, v) # perform the coordinate transform
         azimuth = np.around(azimuth, decimals=4); theta = np.around(theta, decimals=4) # round to appropriate decimals
         
-        df = pd.DataFrame({"Equat": azimuth, "Polar": theta}) # make a temporary DataFrame object with new coordinates
         # now overwrite the old coordinates with the new ones
-        stardata["Equat"] = df['Equat']
-        stardata["Polar"] = df["Polar"]
+        stardata["Equat"] = azimuth
+        stardata["Polar"] = theta
         
         if i == 0:
             # if this is the first iteration, write to a new DataFrame that will store all of the star data
@@ -75,5 +74,17 @@ for i, camera in enumerate(CAMERAS):
         else:
             all_stardata = pd.concat([all_stardata, stardata]) # add this face stardata to the rest of the data
 
-# now let's plot the data to see if it's worked!
-plt.scatter(all_stardata["Equat"].to_numpy(), all_stardata["Polar"].to_numpy(), s=0.1, c='k', lw=0);
+
+all_stardata["dist"]= 1/all_stardata.Parallax
+asd = all_stardata # shorthand
+theta = np.deg2rad(asd.Equat); phi = np.deg2rad( asd.Polar ) # shorthand
+asd["xplot"] = asd.dist * np.sin(phi) * np.cos(theta)
+asd["yplot"] = asd.dist * np.sin(phi) * np.sin(theta)
+asd["zplot"] = asd.dist * np.cos(phi)
+
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+ax.scatter( asd.xplot, asd.yplot, asd.zplot )
+ax.scatter( [0], [0], [0], s = 300, color = 'yellow')
+plt.show()
