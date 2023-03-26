@@ -1,0 +1,30 @@
+RANDOM DYLAN NOTES
+
+xray flashes - the presence of xray flashes is analagous but not the 
+	same as black hole formation
+	could be nothing as data is all random? means there may be no 
+	physics link
+
+b-v can be taken as b-g (should/might be same wavelengths) 
+or even b-r
+
+fit this to blackbody curves (blackbody in assumed in this universe)
+
+check out 'curvefit'/'curve_fit'? in numpy or scipy, might have to use 
+anonymous functions
+
+poisson statistics versus gaussian staistics
+
+fast radio bursts?
+
+for luminosity
+integration of blackbody curves gives flux at our position?
+	to find flux
+	determine bb curve for star
+	normalise to given fluxes
+	numerically integrate over 'all' fluxes to find total flux
+then find lumin using flux distance equation
+
+
+y_inte * factor = blueF
+factor = blueF / y_inte
