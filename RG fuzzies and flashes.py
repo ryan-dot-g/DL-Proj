@@ -270,53 +270,42 @@ flashes["de_Distance"] = flashes.Distance * np.sqrt( 4/flashes["Photon-Count"] +
 
 
 '''     BEGIN FUZZY CALIBRATION SECTION             '''
-FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
-DE_FUZ_DISTANCES = {cam:{} for cam in CAMERAS}
-FUZ_RADVEL = {cam:{} for cam in CAMERAS}
-DE_FUZ_RADVEL = {cam:{} for cam in CAMERAS}
 
-# method below gives only the closest fuzzy to each flash a distance
+flashes["RV"] = [0 for i,f in flashes.iterrows()] # radial velocity in km/s
+flashes["de_RV"] = [0 for i,f in flashes.iterrows()]
+flashes["use"] = [0 for i,f in flashes.iterrows()] 
+
+# method below gives each flash the RV of its closest fuzzy
 for i,flash in flashes.iterrows():
     camera = flash.Direction
     fuzzies = pd.read_csv(f'DATA//{camera}/Distant_Galaxy_Data.csv')
     
     # find closest fuzzy to each flash
     closestFuzzy = get_obj(flash.X,flash.Y,fuzzies)
+    closeFuz = fuzzies.loc[closestFuzzy]
     
-    # assign distance and radial velocity of the fuzzy
-    FUZ_DISTANCES[camera][closestFuzzy] = flash.Distance
-    DE_FUZ_DISTANCES[camera][closestFuzzy] = flash.de_Distance
-    
-    FUZ_RADVEL[camera][closestFuzzy] = fuzzies.loc[closestFuzzy].RadialVelocity
-    DE_FUZ_RADVEL[camera][closestFuzzy] = de_fuzzy_RV 
-    
+    # calculate whether flash is plausibly inside fuzzy galaxy
+    sizeD = closeFuz.Size * 1.2 /3600 # maximum size of fuzzy in degrees
+    posD = 0.05 # maximum error distance in degrees
+    totD = sizeD + posD # maximum allowable distance between fuzzy and flash centers
+    withinX = (flash.X - totD <= closeFuz.X <= flash.X + totD)
+    withinY = (flash.Y - totD <= closeFuz.Y <= flash.Y + totD)
+
+    flashes.loc[i, 'use'] = (withinX and withinY)
+    flashes.loc[i, "RV"] = closeFuz.RadialVelocity
+    flashes.loc[i, "de_RV"] = de_fuzzy_RV
+flashes = flashes[flashes.use] # only use the flashes localised to a fuzzy
+
     
 '''     BEGIN HUBBLES CONSTANT REGRESSION CALCULATION       '''
         
-# flash distances and radial velocities 
-flash_distance_parsec = np.array([d for camDistances in FUZ_DISTANCES.values() for d in camDistances.values()])
-de_flash_distance_parsec = np.array([de_d for de_camDistances in DE_FUZ_DISTANCES.values() for de_d in de_camDistances.values()])
+flashes["Distance_Mpc"] = flashes.Distance / 10**6
+flashes["de_Distance_Mpc"] = flashes.de_Distance / 10**6
 
-flash_RV = np.array([rv for camRV in FUZ_RADVEL.values() for rv in camRV.values()])
-de_flash_RV = np.array([de_rv for de_camRV in DE_FUZ_RADVEL.values() for de_rv in de_camRV.values()])
-
-
-# exclude galaxies in local cluster
-nonlocal_cluster_flashes = (flash_distance_parsec>0.05*10**6) #  [True for i in flash_RV]
-flash_distance_parsec = flash_distance_parsec[nonlocal_cluster_flashes]
-de_flash_distance_parsec = de_flash_distance_parsec[nonlocal_cluster_flashes]
-flash_RV = flash_RV[nonlocal_cluster_flashes]
-de_flash_RV = de_flash_RV[nonlocal_cluster_flashes]
-
-# distances, uncertainties in megaparsecs for Hubbles constant units
-flash_distance_Mpc = flash_distance_parsec/10**6 
-de_flash_distance_Mpc = de_flash_distance_parsec/10**6
-
-# simplifying to X, Y for abstraction of line of best fit calc
-X = flash_distance_Mpc
-de_X = de_flash_distance_Mpc 
-Y = flash_RV
-de_Y = de_flash_RV 
+X = flashes.Distance_Mpc
+de_X = flashes.de_Distance_Mpc
+Y = flashes.RV
+de_Y = flashes.de_RV
 
 def LOBF(X, de_X, Y, de_Y, n_trials):
     ''' Returns m, de_m, c, de_c, using monte-carlo estimation of line of best
@@ -381,15 +370,6 @@ if plotHubble:
     plt.title("Distant galaxy movement to determine Hubble's constant")
     plt.legend()
     plt.show()
-    
-    
-
-# next
-# give each fuzzy a distance using hubble fit
-# examine homogeneity (galaxy number density per volume). compare with r^3
-# examine isotropy
-# cosmological principle implies no center and nonstatic??
-# big bang?
 
 
 
@@ -403,6 +383,9 @@ all_fuzzies["Distance"] = all_fuzzies.RadialVelocity / H0
 all_fuzzies["de_Distance"] = all_fuzzies.Distance * np.sqrt( (de_fuzzy_RV/all_fuzzies.RadialVelocity)**2 + \
                                                          (de_H0/H0)**2 )
                                                          
+maxD = np.max(all_fuzzies.Distance) # max distance Mpc
+maxDLY = maxD * 3.26156 # distance in mega light years
+print(f"Maximum distance in million light years is {maxDLY}")
                                                          
 '''              HOMOGENOUS CALCAULTIONS      '''
                                                          

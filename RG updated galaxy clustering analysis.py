@@ -96,10 +96,10 @@ CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"]
 
 # PLOTTING BOOLS
 camera = "Top"; cameraData = TOP
-plotPartitions = True # whether to plot clustering scatters
-plotHRs = True # whether to plot HR diagrams of each galaxy
+plotPartitions = False # whether to plot clustering scatters
+plotHRs = False # whether to plot HR diagrams of each galaxy
 plotStarCalibration = False # whether to plot master HR diagram for parallax stars
-plotHRcalibration = True # whether to plot fit of HR diagram against star calibration
+plotHRcalibration = False # whether to plot fit of HR diagram against star calibration
 
 # dictionary linking each camera to the (xmin,xmax,ymin,ymax,n_galaxies)
 # data which partitions the camera's field into sections that can be well
@@ -251,3 +251,84 @@ for camera in CAMERAS:
             # calculate position of galactic center and uncertainty
             GAL_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
             DE_GAL_CENTERS[camera][gxy_index] = (de_X, de_Y)
+          
+
+
+stars = STARS["Top"]
+stars = stars[stars.Parallax < 0.01]
+
+# case study: elliptical galaxy
+E0 = stars[stars.Galaxy == 13]
+
+# case study: SB
+SB = stars[stars.Galaxy == 9]
+
+# case study: SBa 
+SBa = stars[stars.Galaxy == 3]
+SBa = SBa[ (SBa.X<6.5) * (SBa.Y<-30.75) * (SBa.Y > -31.03)] # slightly better narrowing
+
+# case study: SBb
+SBb = stars[stars.Galaxy == 10]
+SBb = SBb[SBb.X<3.75] # slightly better narrowing down 
+
+# case study: SBc
+SBc = stars[stars.Galaxy == 0]
+
+
+CASES = ["E0","SB","SBa","SBb","SBc"]
+GALSTARS = {"E0":E0, "SB":SB, "SBa":SBa, "SBb":SBb, "SBc":SBc}
+class Data():
+    pass
+
+gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
+
+
+# rotation curves stuff
+plotStarRV = False # whether to plot stars in the sky with coloured radial velocity
+plotRotCurve = True # whether to plot rotation curves
+
+
+for name,galStars in GALSTARS.items():
+    g = gdata[name] # access item
+    g.name = name
+    g.medVel = np.median(galStars.RadialVelocity) # median radial velocity
+    g.cx = np.median(galStars.X); g.cy = np.median(galStars.Y) # center x and center y
+    
+    galStars["relX"] = galStars.X - g.cx # x, y relative to center of galaxy
+    galStars["relY"] = galStars.Y - g.cy
+    galStars["R"] = np.sqrt( (galStars.relX)**2 + (galStars.relY)**2 ) # distance of each star to the center
+    galStars["Net_RV"] = galStars.RadialVelocity - g.medVel # net radial velocity excludign galaxy veloc as a whole
+    galStars["ABS_RV"] = np.abs(galStars.Net_RV) # absolute radial velocity
+    
+    g.scaleR = np.max(galStars.R) # radius scaling factor
+    g.scaleRV = np.max(galStars.ABS_RV) # absolute RV scaling factor
+    
+    galStars["Rel_R"] = galStars.R/g.scaleR # relative to max radius
+    galStars["Rel_absrv"] = galStars.ABS_RV/g.scaleRV # relative to max abs vel
+    
+    '''                 FIT ENVELOPE                '''
+    outer = galStars[galStars.Rel_R > 0.05] # get rid of sketchy interior stars
+    nbins = 10
+    R_BINS = np.linspace(0.05, 1, nbins)
+    starsInBin = [outer[ (outer.Rel_R > R_BINS[i]) * (outer.Rel_R < R_BINS[i+1]) ] for i in range(len(R_BINS)-1)]
+    RV_BIN = [np.max(s.Rel_absrv) for s in starsInBin]
+    
+    if plotStarRV:
+        plt.scatter(galStars.X, galStars.Y, c = galStars.Net_RV, cmap = mpl.cm.seismic)
+        
+        cbar = plt.colorbar()
+        cbar.set_label("Radial velocity (km/s)", rotation = 270)
+        plt.xlabel("x (deg)"); plt.ylabel("y (deg)")
+        plt.title(f"{g.name} galaxy, relative position and relative radial velocity")
+        plt.show()
+        
+    if plotRotCurve:
+        plt.scatter(galStars.Rel_R, galStars.Rel_absrv, label = "Measured stars")
+        plt.plot(R_BINS[:-1], RV_BIN, label = "Envelope fit")
+        
+        plt.xlabel("Distance from galactic center (relative to galactic max)")
+        plt.ylabel("Magnitude of radial velocity (relative to galactic max)")
+        plt.title(f"Rotation curve of {g.name} galaxy")
+        plt.legend()
+        plt.show()
+
