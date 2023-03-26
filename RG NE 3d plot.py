@@ -85,6 +85,23 @@ asd["zplot"] = asd.dist * np.cos(phi)
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
-ax.scatter( asd.xplot, asd.yplot, asd.zplot )
-ax.scatter( [0], [0], [0], s = 300, color = 'yellow')
+ax.scatter( asd.xplot, asd.yplot, asd.zplot, s = 0.3, label = "Star")
+ax.set(xlabel = "X (pc)", ylabel = "Y (pc)", zlabel = "Z (pc)", title = "New Earth Galaxy")
+ax.scatter( [0], [0], [0], s = 10, color = 'red', label = "New Earth")
+ax.grid(False)
+ax.legend()
+ax.set_xlim(min(asd.xplot),max(asd.xplot))
+ax.set_ylim(min(asd.yplot),max(asd.yplot))
+ax.set_zlim(min(asd.zplot),max(asd.zplot))
 plt.show()
+
+# allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS )
+# P = allStarsDf.Parallax[allStarsDf.Parallax>0]
+# P = 1/P
+# X = np.sort(P)
+
+# plt.hist(X)
+# plt.xlabel("1/parallax (pc)")
+# plt.ylabel("Number of stars within x range")
+# plt.title("High-parallax star density")
+# plt.show()

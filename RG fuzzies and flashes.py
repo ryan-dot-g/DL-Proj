@@ -352,24 +352,34 @@ H0 = m; de_H0 = de_m
 print(f"Hubble's constant is {round(H0,2)} +- {round(de_H0,2)} km/s/Mpc")
 print(f"Y-intercept is {round(c,2)} +- {round(de_c,2)} km/s")
 
+t_h_s = 1/H0 * 3.086e19
+t_h = t_h_s / 3.154e7 / 10**6
+de_t_h = t_h * (de_H0/H0)
+print(f"Hubble time is {round(t_h_s,2)} seconds and so {round(t_h,2)} +- {round(de_t_h,2)} million years")
+
 
 if plotHubble:
     # plot data points
-    plt.scatter(X, Y) 
+    plt.scatter(X, Y, label = "X-ray flashes") 
     plt.errorbar(X,Y, linestyle = 'None', yerr = de_Y, xerr = de_X, )
     
     # plot line of best fit
     predY = np.polyval( [m,c], X )
-    plt.plot( X, predY, color = 'yellow')
+    plt.plot( X, predY, color = 'black', linewidth = 2, label = "Mean best-fit")
     
     # plot trial lines of best fit
     for line in lines:
         trial_predY = np.polyval(line,X)
-        plt.plot(X, trial_predY, 'r-', alpha = 1/255)
+        if np.all(line == lines[0]):
+            plt.plot(X, trial_predY, 'r-', alpha = .3, label = "Sample best-fits")
+        else:
+            plt.plot(X, trial_predY, 'r-', alpha = 1/255)
+        
         
     # other stuff
     plt.xlabel("Distance (Mpc)"); plt.ylabel("Radial velocity (km/s)")
     plt.title("Distant galaxy movement to determine Hubble's constant")
+    plt.legend()
     plt.show()
     
     
