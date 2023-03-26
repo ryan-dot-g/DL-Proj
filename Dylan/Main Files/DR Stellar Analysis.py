@@ -77,7 +77,7 @@ def find_star_temp(BlueF, GreenF, RedF):
     starttemp = 100
     endtemp = 40100 # in our universe stars could reach 100 000 K, this data set 
                     # shows max temp of around 36000K
-    jump = 1000
+    jump = 100
     amount_vals = (endtemp-starttemp) / jump
     equality_list = [] #np.ones(starttemp-25) * 10**100
     # this section especially can be optimised to reduce computational time
