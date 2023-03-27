@@ -90,9 +90,7 @@ ax.set(xlabel = "X (pc)", ylabel = "Y (pc)", zlabel = "Z (pc)", title = "New Ear
 ax.scatter( [0], [0], [0], s = 10, color = 'red', label = "New Earth")
 ax.grid(False)
 ax.legend()
-ax.set_xlim(min(asd.xplot),max(asd.xplot))
-ax.set_ylim(min(asd.yplot),max(asd.yplot))
-ax.set_zlim(min(asd.zplot),max(asd.zplot))
+ax.set_aspect('equal')
 plt.show()
 
 # allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS )

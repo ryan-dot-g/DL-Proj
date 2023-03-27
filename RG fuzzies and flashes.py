@@ -251,10 +251,10 @@ de_d2 = DE_GAL_DISTANCES[nf2.Direction][g2]
 
 # absolute photon counts, scaled by distance using inverse-square law
 absPC1 = nf1["Photon-Count"]*(d1)**2 
-de_absPC1 = absPC1 * np.sqrt( 1/nf1["Photon-Count"] + \
+de_absPC1 = absPC1 * np.sqrt( 1/np.sqrt(nf1["Photon-Count"]) + \
                              (2*de_d1/d1)**2 ) # uncertainty prop
 absPC2 = nf2["Photon-Count"]*(d2)**2
-de_absPC2 = absPC2 * np.sqrt( 1/nf2["Photon-Count"] + \
+de_absPC2 = absPC2 * np.sqrt( 1/np.sqrt(nf2["Photon-Count"]) + \
                              (2*de_d2/d2)**2 ) # uncertainty prop
 
 absPC = np.mean([absPC1, absPC2]) # absolute magnitude at 1 parsec

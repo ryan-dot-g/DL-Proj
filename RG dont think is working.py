@@ -255,3 +255,108 @@ for camera in CAMERAS:
             GAL_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
             DE_GAL_CENTERS[camera][gxy_index] = (de_X, de_Y)
           
+
+
+stars = STARS["Top"]
+stars = stars[stars.Parallax < 0.01]
+
+# case study: elliptical galaxy
+E0 = stars[stars.Galaxy == 13]
+
+# case study: Sb
+Sb = stars[stars.Galaxy == 9]
+
+# case study: SBa 
+SBa = stars[stars.Galaxy == 3]
+SBa = SBa[ (SBa.X<6.5) * (SBa.Y<-30.75) * (SBa.Y > -31.03)] # slightly better narrowing
+
+# case study: SBb
+SBb = stars[stars.Galaxy == 10]
+SBb = SBb[SBb.X<3.75] # slightly better narrowing down 
+
+# case study: SBc
+SBc = stars[stars.Galaxy == 0]
+
+
+CASES = ["E0","Sb","SBa","SBb","SBc"]
+GALSTARS = {"E0":E0, "Sb":Sb, "SBa":SBa, "SBb":SBb, "SBc":SBc}
+class Data():
+    pass
+
+gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
+
+
+# rotation curves stuff
+plotStarRV = True # whether to plot stars in the sky with coloured radial velocity
+plotRotCurve = False # whether to plot rotation curves
+plotMassVsLum  = False
+
+envF = .9 # factor to be included in envelope
+def getEnv(X,Y):
+    ''' Returns Xenv, Yenv - the envelope of X,Y point cloud '''
+    Y = Y[np.argsort(X)]; X = X[np.argsort(X)]    
+    Xenv, Yenv = [X[0]], [Y[0]]
+    
+    for x,y in zip(X,Y):
+        if y > envF * np.max(Yenv):
+            Xenv.append(x); Yenv.append(y)
+    return np.array(Xenv), np.array(Yenv)
+
+for name,galStars in GALSTARS.items():
+    g = gdata[name] # access item
+    g.name = name
+    g.medVel = np.median(galStars.RadialVelocity) # median radial velocity
+    g.cx = np.median(galStars.X); g.cy = np.median(galStars.Y) # center x and center y
+    
+    galStars["relX"] = galStars.X - g.cx # x, y relative to center of galaxy
+    galStars["relY"] = galStars.Y - g.cy
+    galStars["R"] = np.sqrt( (galStars.relX)**2 + (galStars.relY)**2 ) # distance of each star to the center
+    galStars["Net_RV"] = galStars.RadialVelocity - g.medVel # net radial velocity excludign galaxy veloc as a whole
+    galStars["ABS_RV"] = np.abs(galStars.Net_RV) # absolute radial velocity
+    
+    g.scaleR = np.max(galStars.R) # radius scaling factor
+    g.scaleRV = np.max(galStars.ABS_RV) # absolute RV scaling factor
+    
+    galStars["Rel_R"] = galStars.R/g.scaleR # relative to max radius
+    galStars["Rel_absrv"] = galStars.ABS_RV/g.scaleRV # relative to max abs vel
+    
+    '''                 FIT ENVELOPE FOR ROT CURVE               '''
+    outer = galStars[galStars.Rel_R > 0.05] # get rid of sketchy interior stars
+    g.Renv, g.RVenv = getEnv(outer.Rel_R.to_numpy(), outer.Rel_absrv.to_numpy())
+    
+    
+    '''                 MASS ENCLOSED AT R                      '''
+    g.Menv = g.RVenv**2 * g.Renv # mass enclosed in each R
+    g.Lenv = np.array([ np.sum(galStars.R < r) for r in g.Renv ])
+    
+    g.Menv = g.Menv/np.max(g.Menv) # normalising to 1
+    g.Lenv = g.Lenv/np.max(g.Lenv) 
+    
+    if plotStarRV:
+        plt.scatter(galStars.relX, galStars.relY, c = galStars.Net_RV, cmap = mpl.cm.seismic)
+        
+        cbar = plt.colorbar()
+        cbar.set_label("Radial velocity (km/s)") #, rotation = 270)
+        plt.xlabel("x (deg)"); plt.ylabel("y (deg)")
+        plt.title(f"{g.name} galaxy, relative position and relative radial velocity")
+        plt.show()
+        
+    if plotRotCurve:
+        plt.scatter(galStars.Rel_R, galStars.Rel_absrv, label = "Measured stars")
+        plt.scatter(g.Renv, g.RVenv, color = 'red', label = "Envelope fit")
+        
+        plt.xlabel("Distance from galactic center (relative to galactic max)")
+        plt.ylabel("Magnitude of radial velocity (relative to galactic max)")
+        plt.title(f"Rotation curve of {g.name} galaxy")
+        plt.legend()
+        plt.show()
+        
+    if plotMassVsLum:
+        plt.scatter(g.Renv, g.Lenv, label = "Observed luminous mass fraction")
+        plt.scatter(g.Renv, g.Menv, label = "Implied mass from rotational velocity")
+        
+        plt.xlabel("Distance from galactic center (relative to galactic max)")
+        plt.ylabel("Mass enclosed in distance (relative to total mass)")
+        plt.title(f"Observed vs implied mass, {g.name} galaxy")
+        plt.legend()
+        plt.show()
