@@ -30,7 +30,8 @@ matplotlib.rcParams['savefig.dpi']= 300
 import warnings
 warnings.filterwarnings('ignore')
 
-ddir_stars = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA' # point this to where you unzip your data!
+#ddir_stars = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA' # point this to where you unzip your data!
+ddir_stars = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
 ddir = ddir_stars + '/Variable_Star_Data/'
 
 
