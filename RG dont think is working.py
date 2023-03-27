@@ -287,9 +287,9 @@ gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
 
 
 # rotation curves stuff
-plotStarRV = True # whether to plot stars in the sky with coloured radial velocity
+plotStarRV = False # whether to plot stars in the sky with coloured radial velocity
 plotRotCurve = False # whether to plot rotation curves
-plotMassVsLum  = False
+plotMassVsLum  = True
 
 envF = .9 # factor to be included in envelope
 def getEnv(X,Y):
@@ -343,7 +343,7 @@ for name,galStars in GALSTARS.items():
         
     if plotRotCurve:
         plt.scatter(galStars.Rel_R, galStars.Rel_absrv, label = "Measured stars")
-        plt.scatter(g.Renv, g.RVenv, color = 'red', label = "Envelope fit")
+        plt.scatter(g.Renv, g.RVenv, marker = '+', color = 'yellow', label = "Envelope fit")
         
         plt.xlabel("Distance from galactic center (relative to galactic max)")
         plt.ylabel("Magnitude of radial velocity (relative to galactic max)")
@@ -353,7 +353,7 @@ for name,galStars in GALSTARS.items():
         
     if plotMassVsLum:
         plt.scatter(g.Renv, g.Lenv, label = "Observed luminous mass fraction")
-        plt.scatter(g.Renv, g.Menv, label = "Implied mass from rotational velocity")
+        plt.scatter(g.Renv, g.Menv, label = "Implied mass fraction from rotational velocity")
         
         plt.xlabel("Distance from galactic center (relative to galactic max)")
         plt.ylabel("Mass enclosed in distance (relative to total mass)")
