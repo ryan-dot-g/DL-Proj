@@ -99,10 +99,10 @@ CAMERAS = ["Top", "Bottom", "Left", "Right", "Front", "Back"]
 
 # PLOTTING BOOLS
 camera = "Top"; cameraData = TOP
-plotPartitions = False # whether to plot clustering scatters
-plotHRs = False # whether to plot HR diagrams of each galaxy
-plotStarCalibration = False # whether to plot master HR diagram for parallax stars
-plotHRcalibration = False # whether to plot fit of HR diagram against star calibration
+plotPartitions = True # whether to plot clustering scatters
+plotHRs = True # whether to plot HR diagrams of each galaxy
+plotStarCalibration = True # whether to plot master HR diagram for parallax stars
+plotHRcalibration = True # whether to plot fit of HR diagram against star calibration
 
 # dictionary linking each camera to the (xmin,xmax,ymin,ymax,n_galaxies)
 # data which partitions the camera's field into sections that can be well
@@ -225,7 +225,7 @@ for camera in CAMERAS:
                 plt.xlabel('Colour')
                 plt.ylabel('Magnitude')
                 plt.title(f"Colour-magnitude diagram of galaxy {gxy_index}, {camera.lower()} camera")
-                plt.legend(["Benchmark", "Observed galaxy"])
+                plt.legend(["Observed galaxy", "Benchmark"])
                 plt.show()
                 # uncertainties so small they have been omitted
             
