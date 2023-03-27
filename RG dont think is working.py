@@ -352,11 +352,11 @@ for name,galStars in GALSTARS.items():
         plt.show()
         
     if plotMassVsLum:
-        plt.scatter(g.Renv, g.Lenv, label = "Observed luminous mass fraction")
-        plt.scatter(g.Renv, g.Menv, label = "Implied mass fraction from rotational velocity")
+        plt.scatter(g.Renv, g.Lenv, label = "Luminous mass fraction")
+        plt.scatter(g.Renv, g.Menv, label = "Total mass fraction")
         
         plt.xlabel("Distance from galactic center (relative to galactic max)")
         plt.ylabel("Mass enclosed in distance (relative to total mass)")
-        plt.title(f"Observed vs implied mass, {g.name} galaxy")
-        plt.legend()
+        plt.title(f"Luminous vs total mass distribution curves, {g.name} galaxy")
+        plt.legend(loc = 4)
         plt.show()
