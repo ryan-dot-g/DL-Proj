@@ -219,13 +219,13 @@ for camera in CAMERAS:
             
             if plotHRs:
                 # plot uncalibrated HR diagram
-                plt.scatter(galaxy.colour,galaxy.m1)
                 plt.scatter( goodStars.colour, goodStars.abs_mag, 
                              color = 'C1') # calibration stars
+                plt.scatter(galaxy.colour,galaxy.m1)
                 plt.xlabel('Colour')
                 plt.ylabel('Magnitude')
-                plt.title(f"Colour-magnitude diagram of galaxy {gxy_index}, {camera.lower()} camera")
-                plt.legend(["Observed galaxy", "Benchmark"])
+                plt.title(f"Colour-magnitude diagram of galaxy {gxy_index}, {camera.lower()} camera, pre-offset fitting")
+                plt.legend(["Benchmark", "Observed galaxy"])
                 plt.show()
                 # uncertainties so small they have been omitted
             
@@ -235,7 +235,7 @@ for camera in CAMERAS:
                 plt.scatter( galaxy.colour, galaxy.m1 + galacticOffset, color = 'C0' ) # galaxy
                 plt.xlabel('Colour')
                 plt.ylabel('Magnitude')
-                plt.title(f"HR calibration of galaxy {gxy_index}, {camera.lower()} camera")
+                plt.title(f"Colour-magnitude diagram of galaxy {gxy_index}, {camera.lower()} camera, post-offset fitting")
                 plt.legend(["Benchmark", "Calibrated galaxy"])
                 plt.show()
                 # uncertainties so small they have been omitted

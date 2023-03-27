@@ -24,7 +24,8 @@ k = 1.38064 * 10**-23
 stef_boltz = 5.67 * 10**-8
 parallaxCutoff = 0.01
 
-ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
+# ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
+ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
 all_stars = glob.glob(ddir + '*/Star_Data.csv') # all star data
 allStarsDf = pd.concat( pd.read_csv(catalog) for catalog in all_stars ) 
     # super dataframe containing all stars
