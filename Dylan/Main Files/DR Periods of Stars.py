@@ -235,4 +235,7 @@ ax = plt.gca()
 ax.set_yscale('log')
 ax.set_xscale('log')
 plt.scatter(all_variables_c1["Dist"], all_variables_c1["GreenF"])
+plt.xlabel("Distance in Parsecs")
+plt.xlabel("Green FLux")
+plt.show()
 
