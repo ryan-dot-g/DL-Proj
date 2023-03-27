@@ -159,37 +159,43 @@ plt.show()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 """ DISTANCES TO VARIABLE STARS START """
 variables["Dist"] = 1/variables.Parallax # distance = 1/parallax where parallax in arcseconds
 """ DISTANCES TO VARIABLE STARS END """
 
 
-'''
-""" BALLESTEROS' FORMULA FOR STAR TEMPERATURES START """
-#  black body approximation
 
-# first, we find bv index (which should be blue minus green i think but will confirm)
-BV = variables.BlueF - variables.GreenF
-#now we apply ballesteros
-Variable_star_temp = [0] * len(BV)
-for i in range(1, len(BV)):
-    Variable_star_temp[i] = pyasl.BallesterosBV_T().bv2T(float(BV[i]))
-variables["Temps"] = Variable_star_temp
-""" BALLESTEROS' FORMULA FOR STAR TEMPERATURES END """
+""" LINEAR FITTING TO PERIOD LUMINOSITY START """
+variables["abs_mag_v"] = abs_mag_v
+# we define class 1 stars to have 20<P<30 hours and class 2 P>30 hours
+# there is out outlier which doesnt fall into any class, but these class definitions
+# remove that outlier
+class1 = variables[(20 < variables.Period) & (variables.Period < 30)]
+class2 = variables[variables.Period > 30]
 
 
-""" BLACK BODY FROM TEMPERATURE TO RADIUS START """
+A1 = np.vander(class1.Period,2) # the Vandermonde matrix of order N is the matrix of polynomials of an input vector 1, x, x**2, etc
+b1, residuals1, rank1, s1 = np.linalg.lstsq(A1,class1.abs_mag_v)
+print('Recovered parameters C1: %.2f, %.2f' % (b1[0],b1[1]))
+print('C1 equation is Log Flux  =', b1[0], 'P +', b1[1] )
+reconstructed1 = A1 @ b1 # @ is shorthand for matrix multiplication in python
 
-""" BLACK BODY FROM TEMPERATURE TO RADIUS END """
-'''
+A2 = np.vander(class2.Period,2) # the Vandermonde matrix of order N is the matrix of polynomials of an input vector 1, x, x**2, etc
+b2, residuals2, rank2, s2 = np.linalg.lstsq(A2,class2.abs_mag_v)
+print('Recovered parameters C2: %.2f, %.2f' % (b2[0],b2[1]))
+print('C2 equation is Log Flux  =', b2[0], 'P +', b2[1] )
+reconstructed2 = A2 @ b2 # @ is shorthand for matrix multiplication in python
+
+plt.plot(variables.Period,abs_mag_v,'.',color='C2')
+plt.plot(class1.Period,reconstructed1,'-b',label='Reconstructed C1')
+plt.plot(class2.Period,reconstructed2,'-r',label='Reconstructed C2')
+
+plt.legend()
+plt.xlabel('Period (h)')
+plt.ylabel('Log Flux');
+plt.title('Period-Luminosity Diagram of all Variable Stars')
+plt.show()
+
+""" LINEAR FITTING TO PERIOD LUMINOSITY END """
+
+

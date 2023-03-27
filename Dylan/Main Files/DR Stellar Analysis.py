@@ -133,6 +133,7 @@ goodStarsTemps = allStarsDf.merge(goodStars,
         'RadialVelocity', 'Variable?' ], 
                                   right_on=['Name', 'X', 'Y', 'BlueF', 'GreenF', 'RedF', 'Parallax',
         'RadialVelocity', 'Variable?'], how='right')
+
 goodStarsTemps["Total_Flux"] = " "
 
 wavelengths = np.linspace(100*10**-9, 10000*10**-9, 99)
@@ -140,6 +141,10 @@ for n in range(0,len(goodStarsTemps)):
     temperature = goodStarsTemps.iloc[n, 9] #temps is index 9
     y_integration = bbcurve(wavelengths, temperature) # this is flux/m^2 at surface
     y_integration = y_integration * (goodStarsTemps.iloc[n,3] / bbcurve(400*10**-9, temperature))
+  
+    #y_integration = y_integration/(goodStarsTemps.iloc[n,14]*3.086*10**16)**2 # this is flux/m^2 at surface
+
+  
     # here we normalise the bbcurve to the given flux data so we can find flux
     # at our satellite
     goodStarsTemps.iloc[n, 16] = integrate.cumtrapz(y_integration, wavelengths)[-1]
