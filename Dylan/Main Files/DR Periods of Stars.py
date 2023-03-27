@@ -193,9 +193,46 @@ plt.plot(class2.Period,reconstructed2,'-r',label='Reconstructed C2')
 plt.legend()
 plt.xlabel('Period (h)')
 plt.ylabel('Log Flux');
-plt.title('Period-Luminosity Diagram of all Variable Stars')
+plt.title('Period-Luminosity Diagram of all Variable Stars with Directly Determinable Distance')
 plt.show()
-
 """ LINEAR FITTING TO PERIOD LUMINOSITY END """
 
+
+
+""" FINDING DISTANCE TO ALL VARIABLE STARS START """
+
+all_variables = pd.DataFrame({'Name':names, 'Period':periods})
+               # you can turn a dictionary into a dataframe like this
+               # these are ALL the variable stars
+
+all_stars = pd.concat([pd.read_csv(table) for table in all_star_files]) # we are concatenating a list of dataframes; 
+#we generate this list with a "list comprehension", a loop you write inside a list bracket 
+
+all_variables = pd.merge(all_stars,all_variables,on='Name') # merge these two arrays according to the keyword 'name'
+    # we merge to make sure every variable star has basic info from all_stars
+    # such as coordinate and radial velocity
+    
+# now we find the absolute magnitude of each star based off the period and the 
+# already determined period-luminosity relations    
+all_variables_c1 = all_variables[(20 < all_variables.Period) & (all_variables.Period < 30)]
+all_variables_c2 = all_variables[(40 < all_variables.Period) & (all_variables.Period < 50)]
+
+all_variables_c1["Absolute_Magnitude"] = b1[0] * all_variables_c1.Period + b1[1]
+all_variables_c2["Absolute_Magnitude"] = b2[0] * all_variables_c2.Period + b2[1]
+
+plt.scatter(all_variables_c1.Period, all_variables_c1.Absolute_Magnitude)
+plt.scatter(all_variables_c2.Period, all_variables_c2.Absolute_Magnitude)
+
+# here we rearrange the dist, absmag, flux formula as written in """HR diagram with variable stars"""
+# to determine distance: #abs_mag_v = v1 + 2*np.log10(1./variables.Parallax)
+all_variables_c1["Dist"] = 10**((all_variables_c1["Absolute_Magnitude"] - np.log10(all_variables_c1["GreenF"])) / 2)
+all_variables_c2["Dist"] = 10**((all_variables_c2["Absolute_Magnitude"] - np.log10(all_variables_c2["GreenF"])) / 2)
+
+""" FINDING DISTANCE TO ALL VARIABLE STARS END """
+
+# example plot to show realtionship
+ax = plt.gca()
+ax.set_yscale('log')
+ax.set_xscale('log')
+plt.scatter(all_variables_c1["Dist"], all_variables_c1["GreenF"])
 
