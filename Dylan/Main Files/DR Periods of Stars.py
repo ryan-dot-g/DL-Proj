@@ -239,3 +239,7 @@ plt.xlabel("Distance in Parsecs")
 plt.xlabel("Green FLux")
 plt.show()
 
+all_variables_c1.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/VariableClass1.csv')
+all_variables_c2.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/VariableClass2.csv')
+
+
