@@ -255,3 +255,55 @@ for camera in CAMERAS:
             GAL_CENTERS[camera][gxy_index] = (np.median(galaxy.X),np.median(galaxy.Y))
             DE_GAL_CENTERS[camera][gxy_index] = (de_X, de_Y)
           
+            
+extraplots = False
+if extraplots:
+    D = [] # distance of galaxy
+    RV = [] # radial velocity
+    de_D = [] # uncertainties
+    de_RV = [] # uncertainties
+    N = [] # number of stars in galaxy
+    for camera in CAMERAS:
+        stars = STARS[camera]
+        galaxies = set(stars.Galaxy)
+        for gxy_index in galaxies:
+            if gxy_index not in invalidGxyIndices[camera]:
+                galaxy = stars[stars.Galaxy == gxy_index]
+                N.append(len(galaxy))
+                
+                D.append(GAL_DISTANCES[camera][gxy_index])
+                de_D.append(DE_GAL_DISTANCES[camera][gxy_index])
+                
+                RV.append(GAL_RV[camera][gxy_index])
+                de_RV.append(DE_GAL_RV[camera][gxy_index])
+    
+    
+    # histogram of galaxy distances
+    plt.hist([d/1000 for d in D])
+    plt.xlabel("Distance (Mpc)")
+    plt.ylabel("Count")
+    plt.title("Distance distribution of resolvable galaxies")
+    plt.show()
+    
+    # histogram of number of stars in galaxy
+    plt.hist([n/100 for n in N])
+    plt.xlabel("Number of stars (hundreds)")
+    plt.ylabel("Count")
+    plt.title("Stellar population distribution of resolvable galaxies")
+    plt.show()
+    
+    # scatter of distance and radial velocity
+    plt.scatter([d/1000 for d in D], RV)
+    plt.errorbar( [d/1000 for d in D], RV, 
+                  xerr = [d/1000 for d in de_D], yerr = de_RV , linestyle = 'None')
+    plt.xlabel("Galaxy distance (Mpc)")
+    plt.ylabel("Radial velocity (km/s)")
+    plt.title("Distance and radial velocity of resolvable galaxies")
+    plt.show()
+
+
+
+
+
+
+
