@@ -249,7 +249,7 @@ de_d1 = DE_GAL_DISTANCES[nf1.Direction][g1] # uncertainty
 d2 = GAL_DISTANCES[nf2.Direction][g2] # distance of near flash 2
 de_d2 = DE_GAL_DISTANCES[nf2.Direction][g2] 
 
-''' ALTERNATIVE DISTANCE CALIBRATION METHOD             '''
+'''     ALTERNATIVE DISTANCE CALIBRATION METHOD  - VARIABLE STARS            '''
 
 var1 = pd.read_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\VariableClass1.csv')
 var2 = pd.read_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\VariableClass2.csv')
@@ -258,9 +258,10 @@ ALLVARS = pd.concat([var1,var2]) # all variable stars
 ALLVARS["d_f1"] = (ALLVARS.X - nf1.X)**2 + (ALLVARS.Y - nf1.Y)**2 # distance to flash 1
 ALLVARS["d_f2"] = (ALLVARS.X - nf2.X)**2 + (ALLVARS.Y - nf2.Y)**2
 
-top10F1 = ALLVARS.Dist.to_numpy()[ np.argsort(ALLVARS.d_f1.to_numpy()) ][0:10]
+top10F1 = ALLVARS.Dist.to_numpy()[ np.argsort(ALLVARS.d_f1.to_numpy()) ][0:10] # 10 closest variable stars
 top10F2 = ALLVARS.Dist.to_numpy()[ np.argsort(ALLVARS.d_f2.to_numpy()) ][0:10]
 
+# distance and error as mean and std of 10 closest variable stars
 d1_alt = np.mean(top10F1)
 d2_alt = np.mean(top10F2)
 de_d1_alt = np.std(top10F1)
