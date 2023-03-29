@@ -94,7 +94,7 @@ asd["zplot"] = asd.dist * np.cos(phi)
 # plt.show()
 
 allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS )
-P = allStarsDf.Parallax[allStarsDf.Parallax>0]
+P = allStarsDf.Parallax[allStarsDf.Parallax>0.001]
 P = 1/P
 X = np.sort(P)
 
