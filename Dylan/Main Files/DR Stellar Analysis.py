@@ -24,8 +24,8 @@ k = 1.38064 * 10**-23
 stef_boltz = 5.67 * 10**-8
 parallaxCutoff = 0.01
 
-# ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
-ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
+ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
+#ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
 all_stars = glob.glob(ddir + '*/Star_Data.csv') # all star data
 allStarsDf = pd.concat( pd.read_csv(catalog) for catalog in all_stars ) 
     # super dataframe containing all stars
@@ -161,3 +161,41 @@ goodStarsTemps["Radius"] = (goodStarsTemps.Luminosity / (stef_boltz * (goodStars
 
 plt.scatter(goodStarsTemps.dist, goodStarsTemps.Radius)
 
+
+
+
+""" trying something ryan w mentioned """
+goodStarsTemps["trial_radius"] = " "
+# trial radius is 19
+for n in range(0,len(goodStarsTemps)):
+    goodStarsTemps.iloc[n, 19] = np.sqrt(
+    (goodStarsTemps.iloc[n,4] * (goodStarsTemps.iloc[n,14]*3.086*10**16)**2)  /
+         (np.pi * bbcurve(440 * 10**-9, goodStarsTemps.iloc[n,9]) / 10**9) # divide by 10^9 because of nm??       
+)                         
+goodStarsTemps["trial_Luminosity"] = 4 * np.pi * (goodStarsTemps.trial_radius)**2 * (goodStarsTemps.Temp)**4 * stef_boltz
+
+
+plt.yscale("log")   
+plt.scatter(goodStarsTemps.dist, goodStarsTemps.Radius)
+plt.show()
+
+plt.yscale("log")   
+plt.scatter(goodStarsTemps.dist, goodStarsTemps.trial_radius)     
+plt.show()                  
+
+plt.yscale("log")
+plt.scatter(goodStarsTemps.Temp, goodStarsTemps.trial_radius)
+plt.show()
+
+plt.xscale("log")
+plt.scatter(goodStarsTemps.trial_radius, goodStarsTemps.Temp)
+plt.show()
+
+plt.yscale("log")
+plt.gca().invert_xaxis()
+plt.scatter(goodStarsTemps.Temp, goodStarsTemps.trial_radius)
+plt.show()
+
+                     
+# divide by 10^9?                                                                               
+""" """

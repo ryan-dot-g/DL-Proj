@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import warnings; warnings.filterwarnings('ignore')
 import os 
 import pandas as pd 
-ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
+# ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
+ddir = 'C:\\Users\\dylan\\Documents\\GitHub\\DL-Proj\\DATA\\'
+
 
 # define default plot settings
 mpl.style.use('seaborn-colorblind') # colourblind-friendly colour scheme
