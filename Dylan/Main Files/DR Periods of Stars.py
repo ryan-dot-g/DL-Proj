@@ -242,5 +242,7 @@ plt.show()
 
 all_variables_c1.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/VariableClass1.csv')
 all_variables_c2.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/VariableClass2.csv')
+all_variables.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/Variables.csv')
+all_stars.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/AllStars.csv')
 
 
