@@ -53,13 +53,14 @@ goodStars["Plotcol"] = [ 255*np.array([g.m0,g.m1,g.m2])/(g.m0+g.m1+g.m2) for i,g
 varbYes = goodStars[goodStars["Variable?"]==1]
 varbNo = goodStars[goodStars["Variable?"]==0]
 
-plt.scatter(varbYes.colour, varbYes.abs_mag,
-             marker = '*', c = 'green', label = "Variable stars",
-             s = 75)
 plt.scatter(varbNo.colour, varbNo.abs_mag,
             marker = '.', c = varbNo.Temp, cmap = mpl.cm.seismic, label = "Non-variable stars")
 cbar = plt.colorbar()
 cbar.set_label("Temperature (K)")
+plt.scatter(varbYes.colour, varbYes.abs_mag,
+             c = 'grey', label = "Variable stars")
+
+
 
 plt.xlabel("Color"); plt.ylabel("Absolute magnitude"); plt.legend()
 plt.title("Stellar properties in NE galaxy")
