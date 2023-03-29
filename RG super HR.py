@@ -45,21 +45,27 @@ goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
                                   ((2/np.log(10))*goodStars.de_dist/goodStars.dist)**2   ) # uncertainty prop
     
 maxt, mint = max(goodStars.Temp), min(goodStars.Temp)
-tempsizemap = lambda t: (t-mint)/(maxt-mint) * 15 + 5
+normalise = lambda t: (t-mint)/(maxt-mint)
+sizemap = lambda t: np.power(normalise(t),1) * 75 + 10
 
-goodStars['tempsize'] = tempsizemap(goodStars.Temp)
-goodStars["Plotcol"] = [ 255*np.array([g.m0,g.m1,g.m2])/(g.m0+g.m1+g.m2) for i,g in goodStars.iterrows()]
+goodStars['plotsize'] = sizemap(goodStars.Temp)
     
 varbYes = goodStars[goodStars["Variable?"]==1]
 varbNo = goodStars[goodStars["Variable?"]==0]
 
+plt.style.use("dark_background")
 plt.scatter(varbNo.colour, varbNo.abs_mag,
-            marker = '.', c = varbNo.Temp, cmap = mpl.cm.seismic, label = "Non-variable stars")
+            marker = '.', c = varbNo.Temp, cmap = mpl.cm.pink,
+            s = varbNo.plotsize,
+            label = "Non-variable stars")
 cbar = plt.colorbar()
 cbar.set_label("Temperature (K)")
 plt.scatter(varbYes.colour, varbYes.abs_mag,
-             c = 'grey', label = "Variable stars")
+            s = varbYes.plotsize,
+             c = 'green', label = "Variable stars", marker = '+')
 
+plt.scatter(varbNo.colour, [-17 for i in varbNo.colour], marker = '.',
+            c = varbNo.colour, cmap = mpl.cm.seismic, s = 20)
 
 
 plt.xlabel("Color"); plt.ylabel("Absolute magnitude"); plt.legend()
