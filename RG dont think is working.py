@@ -287,8 +287,8 @@ gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
 
 
 # rotation curves stuff
-plotStarRV = False # whether to plot stars in the sky with coloured radial velocity
-plotRotCurve = False # whether to plot rotation curves
+plotStarRV = True # whether to plot stars in the sky with coloured radial velocity
+plotRotCurve = True # whether to plot rotation curves
 plotMassVsLum  = True
 
 envF = .9 # factor to be included in envelope

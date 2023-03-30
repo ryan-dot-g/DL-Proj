@@ -29,7 +29,7 @@ parallaxCutoff = 0.01 # minimum parallax to be a valid star for distance calibra
 allStarsDf = pd.concat( pd.read_csv(f'DATA//{camera}/Star_Data.csv') for camera in CAMERAS ) # super dataframe containing all stars
 
 
-allStarsDf = pd.read_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\All_Star_Data_with_Temps.csv')
+allStarsDf = pd.read_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\Good_Star_Data_with_Temps.csv')
 goodStars = allStarsDf[allStarsDf.Parallax > parallaxCutoff] # calibrate with star if sufficient parallax
 goodStars["m0"], goodStars["m1"], goodStars["m2"] = (np.log10(goodStars.BlueF),
                                                      np.log10(goodStars.GreenF),
@@ -44,18 +44,21 @@ goodStars["abs_mag"] = goodStars.m1 + 2 * np.log10(goodStars.dist) # absolute ma
 goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
                                   ((2/np.log(10))*goodStars.de_dist/goodStars.dist)**2   ) # uncertainty prop
     
-maxt, mint = max(goodStars.Temp), min(goodStars.Temp)
-normalise = lambda t: (t-mint)/(maxt-mint)
-sizemap = lambda t: np.power(normalise(t),1) * 75 + 10
+goodStars["logs"] = np.log(goodStars.trial_radius)
+def sizemap(X):
+    maxx,minx = max(X), min(X)
+    normalise = lambda t: (t-minx)/(maxx-minx)
+    return normalise(X) * 100 + 5
 
-goodStars['plotsize'] = sizemap(goodStars.Temp)
+goodStars['plotsize'] = sizemap(np.power(goodStars.logs,1))
     
 varbYes = goodStars[goodStars["Variable?"]==1]
 varbNo = goodStars[goodStars["Variable?"]==0]
 
 plt.style.use("dark_background")
+# plt.style.use("default")
 plt.scatter(varbNo.colour, varbNo.abs_mag,
-            marker = '.', c = varbNo.Temp, cmap = mpl.cm.pink,
+            marker = '.', c = varbNo.Temp, cmap = mpl.cm.spring,
             s = varbNo.plotsize,
             label = "Non-variable stars")
 cbar = plt.colorbar()

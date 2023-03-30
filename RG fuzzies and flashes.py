@@ -318,6 +318,7 @@ for i,flash in flashes.iterrows():
     flashes.loc[i, 'use'] = (withinX and withinY)
     flashes.loc[i, "RV"] = closeFuz.RadialVelocity
     flashes.loc[i, "de_RV"] = de_fuzzy_RV
+print(f"Rejected {sum(flashes.use==0)} flashes from {len(flashes)} total")
 flashes = flashes[flashes.use] # only use the flashes localised to a fuzzy
 
     
