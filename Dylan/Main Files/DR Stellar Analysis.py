@@ -24,8 +24,8 @@ k = 1.38064 * 10**-23
 stef_boltz = 5.67 * 10**-8
 parallaxCutoff = 0.01
 
-#ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
-ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
+ddir = 'C:/Users/dylan/Documents/GitHub/DL-Proj/DATA/'
+#ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
 all_stars = glob.glob(ddir + '*/Star_Data.csv') # all star data
 allStarsDf = pd.concat( pd.read_csv(catalog) for catalog in all_stars ) 
     # super dataframe containing all stars
@@ -135,6 +135,10 @@ goodStarsTemps = allStarsDf.merge(goodStars,
                                   right_on=['Name', 'X', 'Y', 'BlueF', 'GreenF', 'RedF', 'Parallax',
         'RadialVelocity', 'Variable?'], how='right')
 
+
+
+# this is old code that doesnt work but i am keeping for reference
+"""
 goodStarsTemps["Total_Flux"] = " "
 
 wavelengths = np.linspace(100*10**-9, 10000*10**-9, 99)
@@ -160,43 +164,36 @@ goodStarsTemps["Luminosity"] = 4 * np.pi * (goodStarsTemps.dist*3.086*10**16)**2
 goodStarsTemps["Radius"] = (goodStarsTemps.Luminosity / (stef_boltz * (goodStarsTemps.Temp)**4 * 4 * np.pi))**(1/2)
 
 plt.scatter(goodStarsTemps.dist, goodStarsTemps.Radius)
-
+"""
+# end old code here
 
 
 
 """ trying something ryan w mentioned """
-goodStarsTemps["trial_radius"] = " "
-# trial radius is 19
+goodStarsTemps["Radius"] = " "
+#  radius is 18
 for n in range(0,len(goodStarsTemps)):
-    goodStarsTemps.iloc[n, 19] = np.sqrt(
+    goodStarsTemps.iloc[n, 18] = np.sqrt(
     (goodStarsTemps.iloc[n,4] * (goodStarsTemps.iloc[n,14]*3.086*10**16)**2)  /
          (np.pi * bbcurve(440 * 10**-9, goodStarsTemps.iloc[n,9]) / 10**9) # divide by 10^9 because of nm??       
 )                         
-goodStarsTemps["trial_Luminosity"] = 4 * np.pi * (goodStarsTemps.trial_radius)**2 * (goodStarsTemps.Temp)**4 * stef_boltz
+goodStarsTemps["Luminosity"] = 4 * np.pi * (goodStarsTemps.Radius)**2 * (goodStarsTemps.Temp)**4 * stef_boltz
 
 
 plt.yscale("log")   
 plt.scatter(goodStarsTemps.dist, goodStarsTemps.Radius)
+plt.xlabel("Distance From New Earth (pc)")
+plt.ylabel("Stellar Radius (m)")
 plt.show()
 
-plt.yscale("log")   
-plt.scatter(goodStarsTemps.dist, goodStarsTemps.trial_radius)     
-plt.show()                  
 
 plt.yscale("log")
-plt.scatter(goodStarsTemps.Temp, goodStarsTemps.trial_radius)
+plt.scatter(goodStarsTemps.dist, goodStarsTemps.Luminosity)
+plt.xlabel("Distance From New Earth (pc)")
+plt.ylabel("Stellar Luminosity (W)")
 plt.show()
 
-plt.xscale("log")
-plt.scatter(goodStarsTemps.trial_radius, goodStarsTemps.Temp)
-plt.show()
-
-plt.yscale("log")
-plt.gca().invert_xaxis()
-plt.scatter(goodStarsTemps.Temp, goodStarsTemps.trial_radius)
-plt.show()
-
-goodStarsTemps.to_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\Good_Star_Data_with_Temps.csv')
+#goodStarsTemps.to_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\Good_Star_Data_with_Temps.csv')
                      
 # divide by 10^9?                                                                               
 """ """
