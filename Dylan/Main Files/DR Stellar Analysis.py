@@ -125,7 +125,7 @@ plt.show()
     
 
 # save temperature data in csv
-allStarsDf.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/All_Star_Data_with_Temps.csv')
+# allStarsDf.to_csv('C:/Users/dylan/Documents/GitHub/DL-Proj/Dylan/Main Files/All_Star_Data_with_Temps.csv')
 
 
 # now we try find stellar radii for stars we know distances to
@@ -196,6 +196,7 @@ plt.gca().invert_xaxis()
 plt.scatter(goodStarsTemps.Temp, goodStarsTemps.trial_radius)
 plt.show()
 
+goodStarsTemps.to_csv(r'C:\Users\rgray\OneDrive\ryan\Uni\2023 sem 1\PHYS3080\Assignments\DL-Proj\Dylan\Main Files\Good_Star_Data_with_Temps.csv')
                      
 # divide by 10^9?                                                                               
 """ """
