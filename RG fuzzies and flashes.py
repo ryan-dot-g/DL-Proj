@@ -292,7 +292,6 @@ flashes["Distance"] = np.sqrt(absPC/flashes["Photon-Count"])
 flashes["de_Distance"] = flashes.Distance * np.sqrt( 4/flashes["Photon-Count"] + \
                                                     (de_absPC/absPC)**2 ) # unc
 
-
 '''     BEGIN FUZZY CALIBRATION SECTION             '''
 
 flashes["RV"] = [0 for i,f in flashes.iterrows()] # radial velocity in km/s
@@ -318,8 +317,18 @@ for i,flash in flashes.iterrows():
     flashes.loc[i, 'use'] = (withinX and withinY)
     flashes.loc[i, "RV"] = closeFuz.RadialVelocity
     flashes.loc[i, "de_RV"] = de_fuzzy_RV
-print(f"Rejected {sum(flashes.use==0)} flashes from {len(flashes)} total")
 flashes = flashes[flashes.use] # only use the flashes localised to a fuzzy
+
+
+# filtering flashes
+# localGravCutoff_Mpc = 0.15
+# flashes = flashes[flashes.Distance > localGravCutoff_Mpc * 1e6] # exclude galaxies affected by local grav
+# minUnc = 15000
+# b = (flashes.de_Distance>15000)
+# flashes["de_Distance"] = flashes["de_Distance"] * b + 15000 * (1-b)
+# flashes = flashes[flashes.RV > 225]
+print(f"Using {len(flashes)} flashes from {len(pd.read_csv(ddir + 'Flash_Data.csv'))} total")
+
 
     
 '''     BEGIN HUBBLES CONSTANT REGRESSION CALCULATION       '''
