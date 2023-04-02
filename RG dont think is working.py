@@ -287,9 +287,9 @@ gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
 
 
 # rotation curves stuff
-plotStarRV = True # whether to plot stars in the sky with coloured radial velocity
-plotRotCurve = True # whether to plot rotation curves
-plotMassVsLum  = True
+plotStarRV = False # whether to plot stars in the sky with coloured radial velocity
+plotRotCurve = False # whether to plot rotation curves
+plotMassVsLum  = False
 
 envF = .9 # factor to be included in envelope
 def getEnv(X,Y):
@@ -338,15 +338,15 @@ for name,galStars in GALSTARS.items():
         cbar = plt.colorbar()
         cbar.set_label("Radial velocity (km/s)") #, rotation = 270)
         plt.xlabel("x (deg)"); plt.ylabel("y (deg)")
-        plt.title(f"{g.name} galaxy, relative position and relative radial velocity")
+        plt.title(f"{g.name} galaxy, relative position and radial velocity")
         plt.show()
         
     if plotRotCurve:
         plt.scatter(galStars.Rel_R, galStars.Rel_absrv, label = "Measured stars")
         plt.scatter(g.Renv, g.RVenv, marker = '+', color = 'yellow', label = "Envelope fit")
         
-        plt.xlabel("Distance from galactic center (relative to galactic max)")
-        plt.ylabel("Magnitude of radial velocity (relative to galactic max)")
+        plt.xlabel("Relative distance from center")
+        plt.ylabel("Relative radial velocity")
         plt.title(f"Rotation curve of {g.name} galaxy")
         plt.legend()
         plt.show()
@@ -355,8 +355,22 @@ for name,galStars in GALSTARS.items():
         plt.scatter(g.Renv, g.Lenv, label = "Luminous mass fraction")
         plt.scatter(g.Renv, g.Menv, label = "Total mass fraction")
         
-        plt.xlabel("Distance from galactic center (relative to galactic max)")
-        plt.ylabel("Mass enclosed in distance (relative to total mass)")
-        plt.title(f"Luminous vs total mass distribution curves, {g.name} galaxy")
+        plt.xlabel("Relative distance from center")
+        plt.ylabel("Relative enclosed mass")
+        plt.title(f"Mass distribution curves, {g.name} galaxy")
         plt.legend(loc = 4)
         plt.show()
+    
+    plotInner = True
+    if plotInner:
+        inner = galStars[galStars.Rel_R <= 0.05]
+        plt.scatter(inner.Rel_R, inner.Rel_absrv, label = "Measured stars")
+        
+        plt.xlabel("Relative distance from center")
+        plt.ylabel("Relative radial velocity")
+        plt.title(f"Inner-galaxy rotation curve of {g.name}")
+        plt.show()
+        
+
+
+

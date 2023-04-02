@@ -44,7 +44,7 @@ goodStars["abs_mag"] = goodStars.m1 + 2 * np.log10(goodStars.dist) # absolute ma
 goodStars["de_abs_mag"] = np.sqrt( ((1/np.log(10))*de_flux_pct)**2 + \
                                   ((2/np.log(10))*goodStars.de_dist/goodStars.dist)**2   ) # uncertainty prop
     
-goodStars["logs"] = np.log(goodStars.trial_radius)
+goodStars["logs"] = np.log10(goodStars.trial_radius)
 def sizemap(X):
     maxx,minx = max(X), min(X)
     normalise = lambda t: (t-minx)/(maxx-minx)
@@ -74,7 +74,12 @@ plt.scatter(varbNo.colour, [-17 for i in varbNo.colour], marker = '.',
 plt.xlabel("Color"); plt.ylabel("Absolute magnitude"); plt.legend()
 plt.title("Stellar properties in NE galaxy")
 plt.show()
-    
+
+plt.style.use("default")
+plt.hist(goodStars.logs)
+plt.xlabel("Logarithm of stellar radius (base 10)")
+plt.ylabel("Count")
+plt.title("Stellar radii distribution")
     
     
 

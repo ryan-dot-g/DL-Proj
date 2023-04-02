@@ -195,7 +195,7 @@ print('Recovered parameters C2: %.2f, %.2f' % (b2[0],b2[1]))
 print('C2 equation is Log Flux  =', b2[0], 'P +', b2[1] )
 reconstructed2 = A2 @ b2 # @ is shorthand for matrix multiplication in python
 
-plt.plot(variables.Period,abs_mag_v,'.',color='C0')
+plt.plot(variables.Period[variables.Period>20],abs_mag_v[variables.Period>20],'.',color='C0')
 plt.plot(class1.Period,reconstructed1, c = 'r', linestyle = '--',label='Class 1 fit')
 plt.plot(class2.Period,reconstructed2, c = 'orange', linestyle = '--',label='Class 2 fit')
 plt.plot([35,35],[-9,-4],'--k',label = "Class cutoff")
