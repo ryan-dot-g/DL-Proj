@@ -8,7 +8,8 @@ import os
 import pandas as pd 
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
-ddir = '/Users/MYMTeam/Desktop/DL-Proj/DATA/' #'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
+ddir = '/Users/MYMTeam/Desktop/DL-Proj/DATA/' #
+ddir = 'C:\\Users\\rgray\\OneDrive\\ryan\\Uni\\2023 sem 1\\PHYS3080\\Assignments\\DL-Proj\\DATA\\'
 
 # define default plot settings
 mpl.style.use('seaborn-colorblind') # colourblind-friendly colour scheme
@@ -257,9 +258,9 @@ for gxy_index in galaxies:
         expected_mass = (5 * galaxy_radii * galaxy.netVel**2) / G
         print('Expected mass:', expected_mass, 'Msun')
         
-        Luminosity = sum(galaxy.GreenF) * 4 * np.pi * distance**2; #need the distance to the galaxy 
-        actual_mass = M_L * Luminosity
-        print('Actual mass:', actual_mass, 'Msun')
+        # Luminosity = sum(galaxy.GreenF) * 4 * np.pi * distance**2; #need the distance to the galaxy 
+        # actual_mass = M_L * Luminosity
+        # print('Actual mass:', actual_mass, 'Msun')
         
         
         
