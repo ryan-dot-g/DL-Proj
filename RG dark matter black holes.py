@@ -287,9 +287,9 @@ gdata = {i:Data() for i in GALSTARS.keys()} # galaxy data
 
 
 # rotation curves stuff
-plotStarRV = False # whether to plot stars in the sky with coloured radial velocity
-plotRotCurve = False # whether to plot rotation curves
-plotMassVsLum  = False
+plotStarRV = True # whether to plot stars in the sky with coloured radial velocity
+plotRotCurve = True # whether to plot rotation curves
+plotMassVsLum  = True
 
 envF = .9 # factor to be included in envelope
 def getEnv(X,Y):
@@ -361,7 +361,7 @@ for name,galStars in GALSTARS.items():
         plt.legend(loc = 4)
         plt.show()
     
-    plotInner = True
+    plotInner = False
     if plotInner:
         inner = galStars[galStars.Rel_R <= 0.05]
         plt.scatter(inner.Rel_R, inner.Rel_absrv, label = "Measured stars")
